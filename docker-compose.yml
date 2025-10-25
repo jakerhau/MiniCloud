@@ -1,0 +1,68 @@
+services:
+  # Next.js (frontend) application
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: 522002/frontend:latest
+    ports:
+      - "3000:3000"
+    networks:
+      - cloud-net
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+
+
+  #Nodejs (backend) application
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: 522002/backend:latest
+    ports:
+      - "8081:8081"
+    networks:
+      - cloud-net
+
+    
+
+  database:
+    image: mysql:8.0
+    ports:
+      - "3307:3306"
+    networks:
+      - cloud-net
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=Mini_Cloud
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+      - MYSQL_SSL_MODE=DISABLED
+    volumes:
+      - ./database/init/001_init.sql:/docker-entrypoint-initdb.d/001_init.sql
+    restart: unless-stopped
+
+
+
+  auth:
+    image: keycloak/keycloak:latest
+    ports:
+      - "8082:8080"
+    networks:
+      - cloud-net
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+    restart: unless-stopped
+    volumes:
+      - ./auth/data:/opt/keycloak/data
+
+  # storage-server:
+  # dns-server:
+  # monitoring-server:
+  # logging-server:
+  # load-balancer:
+
+networks:
+  cloud-net:
+    driver: bridge
