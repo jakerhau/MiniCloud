@@ -9,6 +9,9 @@ auth/data/transaction-logs/
 database/data/
 mysql_data/
 
+# Storage server data
+storage-server/data/
+
 # Docker logs
 *.log
 docker-logs/

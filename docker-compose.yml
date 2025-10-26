@@ -59,7 +59,24 @@ services:
     volumes:
       - ./auth/data:/opt/keycloak/data
 
-  # storage-server:
+  storage-server:
+    build:
+      context: ./storage-server
+      dockerfile: Dockerfile
+    image: 522002/storage-server:latest
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    networks:
+      - cloud-net
+    restart: unless-stopped
+    environment:
+      - STORAGE_PATH=/data/storage
+      - MINIO_ROOT_USER=admin123
+      - MINIO_ROOT_PASSWORD=strongpass123
+    volumes:
+    - ./storage-server/data:/data
+
   # dns-server:
   # monitoring-server:
   # logging-server:
