@@ -4,7 +4,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    image: 522002/frontend:latest
+    image: 52200292/frontend:latest
     ports:
       - "3000:3000"
     networks:
@@ -19,7 +19,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    image: 522002/backend:latest
+    image: 52200292/backend:latest
     ports:
       - "8081:8081"
     networks:
@@ -63,7 +63,7 @@ services:
     build:
       context: ./storage-server
       dockerfile: Dockerfile
-    image: 522002/storage-server:latest
+    image: 52200292/storage-server:latest
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -77,7 +77,25 @@ services:
     volumes:
     - ./storage-server/data:/data
 
-  # dns-server:
+
+  # (Bind9) DNS server
+  dns-server:
+    build:
+      context: ./dns-server
+      dockerfile: Dockerfile
+    image: 52200292/dns-server:latest
+    ports:
+      - "53:53/udp"
+      - "53:53/tcp"
+    networks:
+      - cloud-net
+    volumes:
+      - ./dns-server/zones:/etc/bind/zones
+      - ./dns-server/named.conf:/etc/bind/named.conf
+    restart: unless-stopped
+
+
+        
   # monitoring-server:
   # logging-server:
   # load-balancer:
