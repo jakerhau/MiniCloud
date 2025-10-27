@@ -1,17 +1,5 @@
 # Container and Docker related files
 
-# Docker volumes data (Keycloak, Database, etc.)
-auth/data/h2/*.db
-auth/data/h2/*.trace.db
-auth/data/transaction-logs/
-
-# Database data
-database/data/
-mysql_data/
-
-# Storage server data
-storage-server/data/
-
 # Docker logs
 *.log
 docker-logs/
