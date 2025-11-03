@@ -115,7 +115,18 @@ services:
       - cloud-net
     restart: unless-stopped
 
-  # logging-server:
+  # logging-server (grafana):
+  logging-server:
+    image: grafana/grafana:latest
+    ports:
+      - "3120:3000"
+    volumes:
+    - ./logging/provisioning/:/etc/grafana/provisioning/
+    - ./logging/dashboards/:/var/lib/grafana/dashboards/
+    networks:
+      - cloud-net
+    restart: unless-stopped
+
   # load-balancer:
 
 networks:
