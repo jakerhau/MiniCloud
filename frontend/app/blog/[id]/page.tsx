@@ -117,7 +117,7 @@ export default function BlogDetailPage() {
 
         {/* Back to Blog */}
         <div className="mt-12 pt-8 border-t border-border">
-          <Link href="/">
+          <Link href="/blog">
             <button className="bg-secondary text-secondary-foreground px-6 py-3 rounded-lg font-semibold hover:bg-secondary/90 transition-colors">
               ← Quay lại danh sách bài viết
             </button>
