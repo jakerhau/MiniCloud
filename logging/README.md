@@ -36,7 +36,7 @@ services:
   monitoring-grafana-dashboard-server:
     image: grafana/grafana:latest
     container_name: monitoring-grafana-dashboard-server
-    ports: ["3000:3000"]
+    ports: ["3120:3000"]
     volumes:
       - ./logging/provisioning:/etc/grafana/provisioning
       - ./logging/dashboards:/var/lib/grafana/dashboards
@@ -91,7 +91,7 @@ docker compose ps
 
 ## Kiểm thử
 
-1. Mở **Grafana**: `http://localhost:3000`
+1. Mở **Grafana**: `http://localhost:3120`
 2. Đăng nhập: `admin / admin` (đổi mật khẩu khi được yêu cầu)
 3. Vào **Dashboards → Browse**:
    - Thấy **Node Exporter Full** xuất hiện sẵn (được provisioned)
