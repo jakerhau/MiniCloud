@@ -97,6 +97,24 @@ services:
 
         
   # monitoring-server:
+  monitoring-node-exporter-server:
+    image: prom/node-exporter:latest
+    ports:
+      - "9100:9100"
+    networks:
+      - cloud-net
+    restart: unless-stopped
+  
+  monitoring-prometheus-server: 
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - cloud-net
+    restart: unless-stopped
+
   # logging-server:
   # load-balancer:
 
