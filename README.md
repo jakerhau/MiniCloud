@@ -79,6 +79,7 @@ docker-compose up -d --build
 | Auth (Keycloak) | http://localhost:8082 | Authentication server |
 | Storage (MinIO) | http://localhost:9000 | Object storage |
 | Storage Console | http://localhost:9001 | MinIO console |
+| Monitoring | http://localhost:9090 | Monitoring Node Exporter + Prometheus |
 
 ## DNS Resolution
 
