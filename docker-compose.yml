@@ -127,6 +127,9 @@ services:
 
   # load-balancer:
   proxy:
+    build:
+      context: ./load_balancer
+      dockerfile: Dockerfile
     image: nginx:stable
     depends_on:
       - frontend
