@@ -15,7 +15,7 @@ Backend service được xây dựng bằng Node.js, cung cấp RESTful API cho 
 ```
 backend/
 ├── index.js              # Main application entry point
-├── package.json           # Dependencies và scripts
+├── package.json          # Dependencies và scripts
 ├── Dockerfile            # Docker configuration
 └── [other files]         # Additional backend files
 ```

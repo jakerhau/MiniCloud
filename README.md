@@ -80,6 +80,7 @@ docker-compose up -d --build
 | Storage (MinIO) | http://localhost:9000 | Object storage |
 | Storage Console | http://localhost:9001 | MinIO console |
 | Monitoring | http://localhost:9090 | Monitoring Node Exporter + Prometheus |
+| Logging (Granafa) | http://localhost:3120 | Grafana Dashboard  |
 
 ## DNS Resolution
 

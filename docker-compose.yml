@@ -45,7 +45,7 @@ services:
 
 
   auth:
-    image: keycloak/keycloak:latest
+    image: quay.io/keycloak/keycloak:26.4.2
     ports:
       - "8082:8080"
     networks:
@@ -55,7 +55,7 @@ services:
       - KEYCLOAK_ADMIN_PASSWORD=admin
       - KEYCLOAK_HOSTNAME=localhost
     restart: unless-stopped
-    command: ["start-dev"]
+    command: ["start-dev", "--http-relative-path=/auth"]
     volumes:
       - ./auth/data:/opt/keycloak/data
 
@@ -94,8 +94,6 @@ services:
       - ./dns-server/named.conf:/etc/bind/named.conf
     restart: unless-stopped
 
-
-        
   # monitoring-server:
   monitoring-node-exporter-server:
     image: prom/node-exporter:latest
@@ -128,6 +126,20 @@ services:
     restart: unless-stopped
 
   # load-balancer:
+  proxy:
+    image: nginx:stable
+    depends_on:
+      - frontend
+      - backend
+      - auth
+
+    ports:
+      - "80:80"
+    volumes:
+      - ./load_balancer/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - cloud-net
+    restart: unless-stopped
 
 networks:
   cloud-net:
