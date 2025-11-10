@@ -2,8 +2,63 @@ import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { expressjwt } from 'express-jwt';
+import jwksRsa from 'jwks-rsa';
 
 const app = express();
+
+const ISSUER = process.env.OIDC_ISSUER;
+const AUDIENCE = process.env.OIDC_AUDIENCE;
+const ALGORITHMS = ['RS256'];
+
+const missingEnv = Object.entries({ OIDC_ISSUER: ISSUER, OIDC_AUDIENCE: AUDIENCE })
+  .filter(([, value]) => !value)
+  .map(([key]) => key);
+
+if (missingEnv.length > 0) {
+  console.error(`Missing required environment variables: ${missingEnv.join(', ')}`);
+  process.exit(1);
+}
+
+
+console.log(`OIDC Configuration:`);
+console.log(`  ISSUER: ${ISSUER}`);
+console.log(`  AUDIENCE: ${AUDIENCE}`);
+
+const JWKS_URI = `${ISSUER.replace(/\/$/, '')}/protocol/openid-connect/certs`;
+console.log(`  JWKS URI: ${JWKS_URI}`);
+
+
+const jwtMiddleware = expressjwt({
+  secret: jwksRsa.expressJwtSecret({
+    cache: true,
+    rateLimit: true,
+    jwksRequestsPerMinute: 5,
+    jwksUri: JWKS_URI,
+  }),
+  audience: AUDIENCE,
+  algorithms: ALGORITHMS,
+  credentialsRequired: true,
+  clockTolerance: 300, // 5 Mins
+}).unless({ path: ['/hello', '/api/hello', '/health'] });
+
+// Error handler for JWT errors
+const jwtErrorHandler = (err, req, res, next) => {
+  if (err.name === 'UnauthorizedError') {
+    console.error('JWT Error:', err.message);
+    if (err.message.includes('expired')) {
+      return res.status(401).json({ error: 'Token has expired', details: err.message });
+    }
+    if (err.message.includes('invalid token')) {
+      return res.status(401).json({ error: 'Invalid token', details: err.message });
+    }
+    return res.status(401).json({ error: 'Unauthorized', details: err.message });
+  }
+  next(err);
+};
+
+app.use(jwtMiddleware);
+app.use(jwtErrorHandler);
 
 // để build __dirname trong ESM
 const __filename = fileURLToPath(import.meta.url);

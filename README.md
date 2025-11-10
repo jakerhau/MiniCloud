@@ -5,19 +5,46 @@ MiniCloud là một hệ thống microservices được xây dựng với Docker
 ## Kiến trúc hệ thống
 
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Frontend      │    │   Backend       │    │   Database      │
-│   (Next.js)     │◄──►│   (Node.js)     │◄──►│   (MySQL)       │
-│   Port: 3000    │    │   Port: 8081    │    │   Port: 3307    │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         │                       │                       │
-         ▼                       ▼                       ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Auth          │    │   Storage       │    │   DNS Server    │
-│   (Keycloak)    │    │   (MinIO)       │    │   (Bind9)       │
-│   Port: 8082    │    │   Port: 9000    │    │   Port: 53      │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                  ┌──────────────────────────┐
+                                  │      Load Balancer       │
+                          HTTP    │        (Nginx)           │
+                       ─────────▶ │        Port: 80          │
+                                  └────────────┬─────────────┘
+                                               │
+                                               ▼
+      ┌───────────────────────┐         ┌───────────────────────┐
+      │       Frontend        │  API    │        Backend         │
+      │       (Next.js)       │────────▶│       (Node.js)        │
+      │       Port: 3000      │         │       Port: 8081       │
+      └────────────┬──────────┘         └────────────┬───────────┘
+                   │                                 │
+                   │                                 │ SQL
+                   │                                 ▼
+            ┌──────▼──────┐                   ┌───────────────┐
+            │   Auth      │  OIDC/OAuth2      │    Database    │
+            │ (Keycloak)  │◀──────────────────│    (MySQL)     │
+            │ 8082 (/auth)│                   │    3307 (host) │
+            └──────┬──────┘                   └───────────────┘
+                   │
+                   │ S3 API
+                   ▼
+            ┌───────────────┐
+            │    Storage    │
+            │    (MinIO)    │
+            │ API: 9000     │
+            │ UI: 9001      │
+            └───────────────┘
+
+            ┌───────────────┐                ┌─────────────────┐
+            │     DNS       │  resolves      │   Monitoring     │
+            │   (Bind9)     │──────────────▶ │ Prometheus: 9090 │
+            │ host: 1053    │                │ NodeExporter:9100│
+            └───────────────┘                └─────────────────┘
+
+                            ┌─────────────────┐
+                            │     Logging     │
+                            │   Grafana 3120  │
+                            └─────────────────┘
 ```
 
 
@@ -31,7 +58,7 @@ cd MiniCloud
 
 ### 2. Khởi động tất cả services
 ```bash
-docker-compose up -d
+docker-compose up --build
 ```
 
 ### 3. Kiểm tra trạng thái services
@@ -79,8 +106,9 @@ docker-compose up -d --build
 | Auth (Keycloak) | http://localhost:8082 | Authentication server |
 | Storage (MinIO) | http://localhost:9000 | Object storage |
 | Storage Console | http://localhost:9001 | MinIO console |
-| Monitoring | http://localhost:9090 | Monitoring Node Exporter + Prometheus |
-| Logging (Granafa) | http://localhost:3120 | Grafana Dashboard  |
+| Monitoring (Prometheus) | http://localhost:9090 | Metrics collection |
+| Node Exporter | http://localhost:9100 | Host metrics exporter |
+| Logging (Grafana) | http://localhost:3120 | Grafana Dashboard |
 
 ## DNS Resolution
 
@@ -91,6 +119,13 @@ Hệ thống sử dụng DNS server để resolve các domain nội bộ:
 - `auth.cloud.local` → Auth service
 - `database.cloud.local` → Database service
 - `storage.cloud.local` → Storage service
+
+Lưu ý: DNS server được publish trên host port `1053`. Khi thử nghiệm tra cứu DNS từ máy host, sử dụng tham số cổng:
+
+```bash
+dig @127.0.0.1 -p 1053 frontend.cloud.local
+nslookup frontend.cloud.local 127.0.0.1#1053
+```
 
 ## Troubleshooting
 

@@ -13,7 +13,6 @@ services:
     environment:
       - NODE_ENV=production
 
-
   #Nodejs (backend) application
   backend:
     build:
@@ -24,8 +23,9 @@ services:
       - "8081:8081"
     networks:
       - cloud-net
-
-    
+    environment:
+      - OIDC_ISSUER=http://auth:8080/auth/realms/master
+      - OIDC_AUDIENCE=backend
 
   database:
     image: mysql:8.0
@@ -42,8 +42,6 @@ services:
       - ./database/init/001_init.sql:/docker-entrypoint-initdb.d/001_init.sql
     restart: unless-stopped
 
-
-
   auth:
     image: quay.io/keycloak/keycloak:26.4.2
     ports:
@@ -53,11 +51,14 @@ services:
     environment:
       - KEYCLOAK_ADMIN=admin
       - KEYCLOAK_ADMIN_PASSWORD=admin
-      - KEYCLOAK_HOSTNAME=localhost
-    restart: unless-stopped
-    command: ["start-dev", "--http-relative-path=/auth"]
+    command: [
+      "start-dev",
+      "--http-relative-path=/auth",
+      "--hostname-strict=false"
+    ]
     volumes:
       - ./auth/data:/opt/keycloak/data
+    restart: unless-stopped
 
   storage-server:
     build:
