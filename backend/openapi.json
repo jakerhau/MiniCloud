@@ -1,0 +1,53 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "MiniCloud Backend API",
+    "version": "1.0.0",
+    "description": "Minimal OpenAPI spec for backend with OAuth2 for Swagger UI"
+  },
+  "servers": [
+    { "url": "http://localhost:8081", "description": "Local backend" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "oauth2": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "http://localhost:8082/auth/realms/master/protocol/openid-connect/auth",
+            "tokenUrl": "http://localhost:8082/auth/realms/master/protocol/openid-connect/token",
+            "scopes": {
+              "openid": "OpenID scope"
+            }
+          }
+        }
+      }
+    }
+  },
+  "security": [ { "oauth2": [ "openid" ] } ],
+  "paths": {
+    "/hello": {
+      "get": {
+        "summary": "Hello endpoint",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/student": {
+      "get": {
+        "summary": "List students",
+        "responses": {
+          "200": { "description": "OK" }
+        }
+      }
+    }
+  }
+}

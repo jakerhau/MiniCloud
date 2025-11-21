@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { expressjwt } from 'express-jwt';
 import jwksRsa from 'jwks-rsa';
+import swaggerUi from 'swagger-ui-express';
 
 const app = express();
 
@@ -40,7 +41,14 @@ const jwtMiddleware = expressjwt({
   algorithms: ALGORITHMS,
   credentialsRequired: true,
   clockTolerance: 300, // 5 Mins
-}).unless({ path: ['/hello', '/api/hello', '/health'] });
+}).unless({ 
+  path: [
+    '/hello',
+    '/api/hello',
+    '/health',
+    /^\/api-docs.*/
+  ]
+});
 
 // Error handler for JWT errors
 const jwtErrorHandler = (err, req, res, next) => {
@@ -60,23 +68,26 @@ const jwtErrorHandler = (err, req, res, next) => {
 app.use(jwtMiddleware);
 app.use(jwtErrorHandler);
 
-// để build __dirname trong ESM
+// Load OpenAPI spec for Swagger UI
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const openapiPath = path.join(__dirname, 'openapi.json');
+let openapiSpec = {};
+try {
+  openapiSpec = JSON.parse(fs.readFileSync(openapiPath, 'utf8'));
+} catch (e) {
+  console.error('Failed to load openapi.json:', e.message);
+}
 
-app.get('/', (req, res) => {
-  res.send("This is backend' root");
-});
-
-app.get('/api', (req, res) => {
-  res.send('Calling backend API...');
-});
+// Serve Swagger UI at /api-docs with OAuth2 init (Keycloak)
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapiSpec, { explorer: true }, null, null, null, {
+  clientId: 'swagger-ui',
+  appName: 'MiniCloud Swagger UI',
+  usePkceWithAuthorizationCodeGrant: true
+}));
 
 app.get(['/hello', '/api/hello'], (req, res) => {
-  const data = {
-    message: 'Hello from App Server!',
-  };
-  res.json(data);
+  res.json({ message: 'Hello, world!' });
 });
 
 app.get(['/api/student'], (req, res) => {
