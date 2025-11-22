@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { Cloud, Mail, MapPin, Phone } from "lucide-react"
 
 export default function Footer() {
@@ -19,24 +20,24 @@ export default function Footer() {
             <h4 className="font-bold mb-4">Liên Kết Nhanh</h4>
             <ul className="space-y-2 text-primary-foreground/80">
               <li>
-                <a href="#" className="hover:text-primary-foreground transition-colors">
+                <Link href="/" className="hover:text-primary-foreground transition-colors">
                   Trang Chủ
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-primary-foreground transition-colors">
-                  Bài Viết
-                </a>
+                <Link href="/blog" className="hover:text-primary-foreground transition-colors">
+                  Blog
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-primary-foreground transition-colors">
-                  Về Chúng Tôi
-                </a>
+                <Link href="/articles" className="hover:text-primary-foreground transition-colors">
+                  Bài Viết Chuyên Sâu
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-primary-foreground transition-colors">
+                <Link href="/#contact" className="hover:text-primary-foreground transition-colors">
                   Liên Hệ
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -46,24 +47,24 @@ export default function Footer() {
             <h4 className="font-bold mb-4">Danh Mục</h4>
             <ul className="space-y-2 text-primary-foreground/80">
               <li>
-                <a href="#" className="hover:text-primary-foreground transition-colors">
+                <Link href="/blog" className="hover:text-primary-foreground transition-colors">
                   Khoa Học
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-primary-foreground transition-colors">
+                <Link href="/blog" className="hover:text-primary-foreground transition-colors">
                   Môi Trường
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-primary-foreground transition-colors">
+                <Link href="/blog" className="hover:text-primary-foreground transition-colors">
                   Nhiếp Ảnh
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-primary-foreground transition-colors">
+                <Link href="/articles" className="hover:text-primary-foreground transition-colors">
                   Khí Hậu
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -92,16 +93,12 @@ export default function Footer() {
         <div className="border-t border-primary-foreground/20 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center text-primary-foreground/80 text-sm">
             <p>&copy; 2025 Cloud Stories. Tất cả quyền được bảo lưu.</p>
-            <div className="flex gap-6 mt-4 md:mt-0">
-              <a href="#" className="hover:text-primary-foreground transition-colors">
-                Chính Sách Bảo Mật
-              </a>
-              <a href="#" className="hover:text-primary-foreground transition-colors">
-                Điều Khoản Sử Dụng
-              </a>
-              <a href="#" className="hover:text-primary-foreground transition-colors">
+            <div className="flex gap-6 mt-4 md:mt-0 text-primary-foreground/70">
+              <span>Chính sách bảo mật (đang cập nhật)</span>
+              <span>Điều khoản sử dụng (đang cập nhật)</span>
+              <Link href="/" className="hover:text-primary-foreground transition-colors">
                 Sitemap
-              </a>
+              </Link>
             </div>
           </div>
         </div>

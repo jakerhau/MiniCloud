@@ -10,7 +10,6 @@ FROM base AS builder
 COPY . .
 RUN npm run build
 
-# Production stage (nhẹ, sạch)
 FROM node:20-alpine AS runner
 WORKDIR /app
 

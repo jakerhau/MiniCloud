@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import Link from "next/link"
 import { Calendar } from "lucide-react"
 
@@ -21,10 +22,12 @@ export default function BlogCard({ post }: BlogCardProps) {
     <article className="bg-card rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 border border-border hover:scale-105 transition-transform duration-300">
       {/* Image */}
       <div className="relative h-48 overflow-hidden bg-muted">
-        <img
+        <Image
           src={post.image || "/placeholder.svg"}
           alt={post.title}
-          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+          fill
+          sizes="(max-width: 768px) 100vw, 400px"
+          className="object-cover hover:scale-105 transition-transform duration-300"
         />
         <div className="absolute top-4 right-4">
           <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-semibold animate-fade-in">

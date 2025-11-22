@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import Link from "next/link"
 import { Calendar, User, Clock, Tag } from "lucide-react"
 
@@ -29,10 +30,12 @@ export default function ArticleCard({ article, featured = false }: ArticleCardPr
     }`}>
       {/* Image */}
       <div className="relative h-48 overflow-hidden bg-muted">
-        <img
+        <Image
           src={article.image || "/placeholder.svg"}
           alt={article.title}
-          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+          fill
+          sizes="(max-width: 768px) 100vw, 500px"
+          className="object-cover hover:scale-105 transition-transform duration-300"
         />
         <div className="absolute top-4 right-4">
           <span className="bg-primary text-primary-foreground px-3 py-1 rounded-full text-sm font-semibold">
@@ -42,7 +45,7 @@ export default function ArticleCard({ article, featured = false }: ArticleCardPr
         {featured && (
           <div className="absolute top-4 left-4">
             <span className="bg-accent text-accent-foreground px-3 py-1 rounded-full text-sm font-semibold">
-              Featured
+              Nổi bật
             </span>
           </div>
         )}
@@ -93,7 +96,7 @@ export default function ArticleCard({ article, featured = false }: ArticleCardPr
 
         <Link href={`/articles/${article.id}`}>
           <button className="w-full bg-primary text-primary-foreground py-2 rounded-lg font-semibold hover:bg-primary/90 transition-colors">
-            Read Article
+            Đọc bài viết
           </button>
         </Link>
       </div>
