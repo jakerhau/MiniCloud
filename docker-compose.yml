@@ -121,7 +121,7 @@ services:
       - "3120:3000"
     volumes:
     - ./logging/provisioning/:/etc/grafana/provisioning/
-    - ./logging/dashboards/:/var/lib/grafana/dashboards/
+    - ./logging/grafana-data:/var/lib/grafana
     networks:
       - cloud-net
     restart: unless-stopped
