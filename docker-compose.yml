@@ -1,14 +1,29 @@
 services:
-  # Next.js (frontend) application
-  frontend:
+  # Next.js (frontend) application instances
+  web-frontend-server1:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     image: 52200292/frontend:latest
     ports:
-      - "3000:3000"
+      - "3001:3000"
     networks:
-      - cloud-net
+      cloud-net:
+        ipv4_address: 172.31.0.2
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+
+  web-frontend-server2:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: 52200292/frontend:latest
+    ports:
+      - "3002:3000"
+    networks:
+      cloud-net:
+        ipv4_address: 172.31.0.3
     restart: unless-stopped
     environment:
       - NODE_ENV=production
@@ -22,7 +37,8 @@ services:
     ports:
       - "8081:8081"
     networks:
-      - cloud-net
+      cloud-net:
+        ipv4_address: 172.31.0.7
     environment:
       - OIDC_ISSUER=http://auth:8080/auth/realms/master
       - OIDC_AUDIENCE=backend
@@ -32,7 +48,8 @@ services:
     ports:
       - "3307:3306"
     networks:
-      - cloud-net
+      cloud-net:
+        ipv4_address: 172.31.0.10
     environment:
       - MYSQL_ROOT_PASSWORD=root
       - MYSQL_DATABASE=Mini_Cloud
@@ -47,7 +64,8 @@ services:
     ports:
       - "8082:8080"
     networks:
-      - cloud-net
+      cloud-net:
+        ipv4_address: 172.31.0.6
     environment:
       - KEYCLOAK_ADMIN=admin
       - KEYCLOAK_ADMIN_PASSWORD=admin
@@ -69,7 +87,8 @@ services:
       - "9000:9000"
       - "9001:9001"
     networks:
-      - cloud-net
+      cloud-net:
+        ipv4_address: 172.31.0.4
     restart: unless-stopped
     environment:
       - STORAGE_PATH=/data/storage
@@ -89,7 +108,8 @@ services:
       - "1053:53/udp"
       - "1053:53/tcp"
     networks:
-      - cloud-net
+      cloud-net:
+        ipv4_address: 172.31.0.8
     volumes:
       - ./dns-server/zones:/etc/bind/zones
       - ./dns-server/named.conf:/etc/bind/named.conf
@@ -101,7 +121,8 @@ services:
     ports:
       - "9100:9100"
     networks:
-      - cloud-net
+      cloud-net:
+        ipv4_address: 172.31.0.9
     restart: unless-stopped
   
   monitoring-prometheus-server: 
@@ -111,7 +132,8 @@ services:
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     networks:
-      - cloud-net
+      cloud-net:
+        ipv4_address: 172.31.0.11
     restart: unless-stopped
 
   # logging-server (grafana):
@@ -123,7 +145,8 @@ services:
     - ./logging/provisioning/:/etc/grafana/provisioning/
     - ./logging/grafana-data:/var/lib/grafana
     networks:
-      - cloud-net
+      cloud-net:
+        ipv4_address: 172.31.0.5
     restart: unless-stopped
 
   # load-balancer:
@@ -133,7 +156,8 @@ services:
       dockerfile: Dockerfile
     image: nginx:stable
     depends_on:
-      - frontend
+      - web-frontend-server1
+      - web-frontend-server2
       - backend
       - auth
 
@@ -141,10 +165,15 @@ services:
       - "80:80"
     volumes:
       - ./load_balancer/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./frontend/public/blog:/var/www/blog-static:ro
     networks:
-      - cloud-net
+      cloud-net:
+        ipv4_address: 172.31.0.12
     restart: unless-stopped
 
 networks:
   cloud-net:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.31.0.0/24

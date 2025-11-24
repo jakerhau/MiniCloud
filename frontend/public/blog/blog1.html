@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blog 1 - 30 Ngày Học Cloud</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/modern-normalize/2.0.0/modern-normalize.min.css"
+    />
+    <style>
+      body {
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+        margin: 0;
+        padding: 2rem;
+      }
+      .site-header {
+        max-width: 900px;
+        margin: 0 auto 1.5rem;
+        padding: 1rem 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #334155;
+      }
+      .logo {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-weight: 700;
+        text-decoration: none;
+        color: #f8fafc;
+        font-size: 1.2rem;
+      }
+      .logo-icon {
+        font-size: 1.4rem;
+      }
+      .site-nav {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+      .site-nav a {
+        text-decoration: none;
+        color: #94a3b8;
+        font-weight: 500;
+      }
+      .site-nav a:hover {
+        color: #38bdf8;
+      }
+      .shell {
+        max-width: 760px;
+        margin: auto;
+        background: #1f2937;
+        border-radius: 26px;
+        padding: 2.5rem;
+        box-shadow: 0 25px 70px rgba(0, 0, 0, 0.45);
+        border: 1px solid #334155;
+      }
+      h1 {
+        font-size: 2.4rem;
+        margin-bottom: 1rem;
+        color: #f8fafc;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.95rem;
+        color: #94a3b8;
+      }
+      img {
+        width: 100%;
+        border-radius: 20px;
+        margin: 1rem 0 2rem;
+      }
+      p,
+      ul {
+        line-height: 1.8;
+      }
+      ul {
+        padding-left: 1.2rem;
+      }
+      .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 2rem;
+        color: #38bdf8;
+        text-decoration: none;
+        font-weight: 600;
+      }
+      .back-link:hover {
+        text-decoration: underline;
+      }
+      .site-footer {
+        max-width: 900px;
+        margin: 2rem auto 0;
+        padding: 1.5rem 0;
+        border-top: 1px solid #334155;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+        font-size: 0.95rem;
+        color: #94a3b8;
+      }
+      .footer-links {
+        display: flex;
+        gap: 1rem;
+      }
+      .footer-links a {
+        color: #38bdf8;
+        text-decoration: none;
+      }
+      .footer-links a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="logo" href="/">
+        <span class="logo-icon">☁️</span>
+        <span>Cloud Stories</span>
+      </a>
+      <nav class="site-nav">
+        <a href="/">Trang Chủ</a>
+        <a href="/articles">Bài Viết</a>
+        <a href="/blog">Blog</a>
+        <a href="/#contact">Liên Hệ</a>
+      </nav>
+    </header>
+    <section class="shell">
+      <a class="back-link" href="/blog">← Quay lại blog</a>
+      <h1>Nhật ký 30 ngày tự học Cloud</h1>
+      <div class="meta">
+        <span>05 Tháng 11, 2025</span>
+        <span>Trần Minh Khoa</span>
+        <span>Chủ đề: Công nghệ</span>
+      </div>
+      <img src="/image1.jpg" alt="Học cloud" />
+      <p>
+        Ba mươi ngày trước mình quyết định thử thách bản thân: mỗi ngày đều dành ít nhất 60 phút để học
+        Cloud. Mục tiêu là hiểu được kiến trúc tổng quan, tự dựng một hệ thống nhỏ và viết lại hành trình.
+      </p>
+      <ul>
+        <li><strong>Tuần 1:</strong> Làm quen khái niệm IaaS, PaaS, SaaS, đọc tài liệu AWS và Azure.</li>
+        <li><strong>Tuần 2:</strong> Tự triển khai MiniCloud bằng Docker Compose, tập viết README.</li>
+        <li><strong>Tuần 3:</strong> Thêm giám sát bằng Prometheus/Grafana, làm quen alert cơ bản.</li>
+        <li><strong>Tuần 4:</strong> Tổng kết lại blog này với Next.js và chuẩn bị slide chia sẻ.</li>
+      </ul>
+      <p>
+        Việc mỗi ngày ghi chú nhỏ giúp mình nhận ra: học Cloud không chỉ là kiến thức kỹ thuật mà còn là
+        kiên nhẫn và tư duy hệ thống. Hy vọng câu chuyện này truyền động lực cho bạn!
+      </p>
+      <a class="back-link" href="/">← Quay lại trang chính</a>
+    </section>
+    <footer class="site-footer">
+      <p>&copy; 2025 Cloud Stories · Blog HTML tĩnh được phục vụ qua Nginx alias.</p>
+      <div class="footer-links">
+        <a href="/blog">Xem Blog Next.js</a>
+        <a href="/blog-static/blog2.html">Bài 2</a>
+        <a href="/blog-static/blog3.html">Bài 3</a>
+      </div>
+    </footer>
+  </body>
+</html>
+
