@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blog 3 - Kỹ thuật ghi chép hiệu quả</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/modern-normalize/2.0.0/modern-normalize.min.css"
+    />
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+        padding: 2rem;
+        margin: 0;
+      }
+      .site-header {
+        max-width: 900px;
+        margin: 0 auto 1.5rem;
+        padding: 1rem 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #334155;
+      }
+      .logo {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-weight: 700;
+        text-decoration: none;
+        color: #f8fafc;
+        font-size: 1.2rem;
+      }
+      .logo-icon {
+        font-size: 1.4rem;
+      }
+      .site-nav {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+      .site-nav a {
+        text-decoration: none;
+        color: #94a3b8;
+        font-weight: 500;
+      }
+      .site-nav a:hover {
+        color: #38bdf8;
+      }
+      .shell {
+        max-width: 760px;
+        margin: auto;
+        background: #1f2937;
+        border-radius: 26px;
+        padding: 2.5rem;
+        box-shadow: 0 25px 70px rgba(0, 0, 0, 0.45);
+        border: 1px solid #334155;
+      }
+      h1 {
+        font-size: 2.3rem;
+        margin-bottom: 0.5rem;
+        color: #f8fafc;
+      }
+      .meta {
+        color: #94a3b8;
+        margin-bottom: 1.5rem;
+      }
+      img {
+        width: 100%;
+        border-radius: 22px;
+        margin: 1.5rem 0;
+      }
+      h2 {
+        margin-top: 2rem;
+        color: #fcd34d;
+      }
+      p,
+      li {
+        line-height: 1.8;
+      }
+      ul {
+        padding-left: 1.2rem;
+      }
+      .back {
+        display: inline-flex;
+        margin-top: 2rem;
+        color: #38bdf8;
+        text-decoration: none;
+        font-weight: 600;
+        align-items: center;
+        gap: 0.4rem;
+      }
+      .back:hover {
+        text-decoration: underline;
+      }
+      .site-footer {
+        max-width: 900px;
+        margin: 2rem auto 0;
+        padding: 1.5rem 0;
+        border-top: 1px solid #334155;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+        font-size: 0.95rem;
+        color: #94a3b8;
+      }
+      .footer-links {
+        display: flex;
+        gap: 1rem;
+      }
+      .footer-links a {
+        color: #38bdf8;
+        text-decoration: none;
+      }
+      .footer-links a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="logo" href="/">
+        <span class="logo-icon">☁️</span>
+        <span>Cloud Stories</span>
+      </a>
+      <nav class="site-nav">
+        <a href="/">Trang Chủ</a>
+        <a href="/articles">Bài Viết</a>
+        <a href="/blog">Blog</a>
+        <a href="/#contact">Liên Hệ</a>
+      </nav>
+    </header>
+    <section class="shell">
+      <a class="back-link" href="/blog">← Quay lại blog</a>
+      <h1>3 kỹ thuật ghi chép giúp việc học hiệu quả hơn</h1>
+      <p class="meta">10 Tháng 10, 2025 · Chủ đề: Học tập · Tác giả: Trần Minh Khoa</p>
+      <img src="/image3.jpg" alt="Notebook" />
+      <p>
+        Mình từng ghi chép rất nhiều nhưng lại khó tìm kiếm và tổng hợp. Sau nhiều lần thử, mình chọn kết hợp
+        ba phương pháp dưới đây cho từng bối cảnh khác nhau.
+      </p>
+      <h2>1. Cornell Notes</h2>
+      <p>
+        Phù hợp khi học online/offline. Trang giấy chia làm ba phần: cột ghi chú chính, cột từ khóa và cuối
+        cùng là tóm tắt. Nhìn lại cực nhanh mà vẫn đủ chi tiết.
+      </p>
+      <h2>2. Zettelkasten</h2>
+      <p>
+        Dùng để lưu ý tưởng dài hạn. Mỗi ghi chú chỉ nói về một ý, liên kết chéo bằng thẻ. Sau vài tuần sẽ có
+        mạng lưới kiến thức cá nhân, rất hữu ích khi viết blog hay chuẩn bị workshop.
+      </p>
+      <h2>3. Bullet Journal</h2>
+      <p>
+        Mình áp dụng để quản lý công việc hàng ngày. Ký hiệu TODO / Doing / Done, kèm một dòng “daily
+        highlight” để nhớ điều vui nhất trong ngày.
+      </p>
+      <p>
+        Khi kết hợp ba kỹ thuật, mình vừa nắm tổng thể lẫn chi tiết, học nhanh hơn và nhớ lâu hơn. Bạn có thể
+        thử biến tấu theo phong cách riêng của mình.
+      </p>
+      <a class="back" href="/">← Quay lại trang chính</a>
+    </section>
+    <footer class="site-footer">
+      <p>&copy; 2025 Cloud Stories · Demo HTML tĩnh phục vụ qua Nginx alias.</p>
+      <div class="footer-links">
+        <a href="/blog">Blog Next.js</a>
+        <a href="/blog-static/blog1.html">Bài 1</a>
+        <a href="/blog-static/blog2.html">Bài 2</a>
+      </div>
+    </footer>
+  </body>
+</html>
+

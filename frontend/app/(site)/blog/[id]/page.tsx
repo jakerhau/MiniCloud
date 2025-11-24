@@ -28,10 +28,12 @@ export default function BlogDetailPage() {
   return (
     <article className="bg-background">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        <Link href="/blog" className="inline-flex items-center gap-2 text-primary font-semibold">
-          <ArrowLeft className="h-4 w-4" />
-          Tất cả bài blog
-        </Link>
+        <div className="flex flex-wrap gap-4">
+          <Link href="/blog" className="inline-flex items-center gap-2 text-primary font-semibold">
+            <ArrowLeft className="h-4 w-4" />
+            Quay lại blog
+          </Link>
+        </div>
 
         <div className="relative h-72 w-full overflow-hidden rounded-2xl border border-border bg-muted">
           <Image
@@ -63,6 +65,12 @@ export default function BlogDetailPage() {
             {post.content}
           </ReactMarkdown>
         </div>
+      </div>
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      <Link href="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary font-semibold">
+        <ArrowLeft className="h-4 w-4" />
+        Quay lại trang chính
+      </Link>
       </div>
     </article>
   )
