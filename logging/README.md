@@ -13,41 +13,52 @@ Dịch vụ **Logging / Visualization** sử dụng **Grafana** để trực qua
 - Hiển thị **CPU / Memory / Network**… từ **Node Exporter** thông qua **Prometheus**.
 - Cho phép quản trị viên xem dashboard ngay sau khi khởi động (không cần thao tác tay).
 
-## Cấu trúc thư mục
+## Cấu trúc thư mục 
 
 ```
 logging/
 ├─ README.md
 ├─ provisioning/
 │  ├─ datasources/
-│  │  └─ datasource.yml          # Tự tạo datasource Prometheus
+│  │  └─ datasource.yml          # Khai báo datasource Prometheus
 │  └─ dashboards/
-│     └─ dashboard.yml           # Tự import các dashboard JSON
-└─ dashboards/
-   └─ node-exporter-full.json    # Dashboard Node Exporter Full (ID 1860)
+│     └─ dashboard.yml           # Provider trỏ tới /var/lib/grafana/dashboards
+├─ dashboards/                   # (Tùy chọn) chứa file JSON nếu muốn mount trực tiếp
+│  └─ System Health of 52200205.json   # Dashboard hiện có (được bạn cung cấp)
+└─ grafana-data/                # (Trong compose) mount vào /var/lib/grafana để lưu state, dashboards import
 ```
 
 ## Docker Configuration
 
-### docker-compose.yml (ví dụ)
+### docker-compose.yml (đang dùng thực tế)
 
 ```yaml
-services:
-  monitoring-grafana-dashboard-server:
-    image: grafana/grafana:latest
-    container_name: monitoring-grafana-dashboard-server
-    ports: ["3120:3000"]
-    volumes:
-      - ./logging/provisioning:/etc/grafana/provisioning
-      - ./logging/dashboards:/var/lib/grafana/dashboards
-    networks: [cloud-net]
-    restart: unless-stopped
+logging-server:
+  image: grafana/grafana:latest
+  ports:
+    - "3120:3000"
+  volumes:
+    - ./logging/provisioning/:/etc/grafana/provisioning/
+    - ./logging/grafana-data:/var/lib/grafana
+  networks:
+    cloud-net:
+      ipv4_address: 172.31.0.5
+  restart: unless-stopped
 ```
 
-> Lưu ý:
-> - Thư mục `logging/provisioning` được mount vào `/etc/grafana/provisioning`.
-> - Thư mục `logging/dashboards` được mount vào `/var/lib/grafana/dashboards`.
-> - Tên service Prometheus trong mạng Docker là `monitoring-prometheus-server` (điều chỉnh cho khớp compose của bạn).
+Giải thích volumes:
+- Provisioning YAML nằm trong `/etc/grafana/provisioning/`.
+- Toàn bộ trạng thái Grafana (bao gồm dashboards đã import, config nội bộ) nằm trong `./logging/grafana-data` (→ `/var/lib/grafana`).
+- Vì mount toàn bộ `grafana-data`, provider trong `dashboard.yml` trỏ tới `/var/lib/grafana/dashboards` nghĩa là Grafana sẽ tìm JSON trong thư mục con `grafana-data/dashboards` bên trong volume. Hiện tại repo có thư mục `dashboards/` riêng nhưng CHƯA được mount; để auto import `System Health...` bạn cần đảm bảo file JSON xuất hiện bên trong `grafana-data/dashboards/` (copy thủ công hoặc thêm volume bổ sung).
+
+Tùy chọn: Nếu muốn mount thư mục nguồn `logging/dashboards` trực tiếp thay vì copy tay, có thể sửa compose:
+```yaml
+  volumes:
+    - ./logging/provisioning/:/etc/grafana/provisioning/
+    - ./logging/grafana-data:/var/lib/grafana
+    - ./logging/dashboards:/var/lib/grafana/dashboards:ro
+```
+Khi đó mỗi lần cập nhật JSON ở repo sẽ có hiệu lực ngay (dashboard sẽ được re-provision khi Grafana restart).
 
 ## Provisioning
 
@@ -80,13 +91,14 @@ providers:
 
 ### 3) Dashboard JSON
 
-- `dashboards/node-exporter-full.json` là dashboard mẫu (ID 1860) để hiển thị các metric của **Node Exporter**.
+- `dashboards/System Health of 52200205.json`: Dashboard hiện có trong repo (đặt tên tùy chỉnh). Để được auto import cần đặt file vào đường dẫn mà provider đọc: `grafana-data/dashboards/` hoặc mount `logging/dashboards` → `/var/lib/grafana/dashboards`.
+- (Tùy chọn) `dashboards/node-exporter-full.json`: Thêm file nếu muốn sử dụng dashboard chuẩn ID 1860 của cộng đồng.
 
 ## Khởi động
 
 ```bash
-docker compose up -d monitoring-grafana-dashboard-server
-docker compose ps
+docker compose up -d logging-server
+docker compose ps logging-server
 ```
 
 ## Kiểm thử
@@ -94,15 +106,15 @@ docker compose ps
 1. Mở **Grafana**: `http://localhost:3120`
 2. Đăng nhập: `admin / admin` (đổi mật khẩu khi được yêu cầu)
 3. Vào **Dashboards → Browse**:
-   - Thấy **Node Exporter Full** xuất hiện sẵn (được provisioned)
-4. Mở dashboard, kiểm tra các panel:
-   - CPU, Memory, Network… hiển thị số liệu realtime
+  - Nếu đã đặt file JSON vào đúng path provisioning (ví dụ `grafana-data/dashboards/System Health of 52200205.json`) dashboard sẽ xuất hiện tự động.
+4. Mở dashboard, kiểm tra các panel CPU, Memory, Network…
+5. Nếu dashboard KHÔNG thấy: kiểm tra xem JSON đã nằm trong thư mục mà provider trỏ tới (theo phần trên) và restart container.
 
 
 
 ## DNS & Networking
 
-- Service Grafana sẽ tham gia mạng `cloud-net`, có thể truy cập tới Prometheus qua hostname `monitoring-prometheus-server:9090`.
+- Service Grafana tham gia mạng `cloud-net`, truy cập Prometheus qua hostname `monitoring-prometheus-server:9090` (theo datasource.yml). Đảm bảo tên service Prometheus trong compose đúng với giá trị này; nếu khác, chỉnh lại `url` trong datasource.
 
 
 ## Bảo mật
@@ -115,11 +127,12 @@ docker compose ps
 
 ### Common Issues
 
-- **Dashboard không xuất hiện**:
-  - Kiểm tra mount volumes `provisioning/` và `dashboards/`.
-  - Xem log Grafana để xác nhận provisioning:
+-- **Dashboard không xuất hiện**:
+  - File JSON chưa ở đúng đường dẫn provider (`/var/lib/grafana/dashboards`).
+  - Nếu dùng approach mount riêng: kiểm tra volume `./logging/dashboards:/var/lib/grafana/dashboards` có được thêm không.
+  - Xem log provisioning:
     ```bash
-    docker logs monitoring-grafana-dashboard-server | grep -i provision
+    docker compose logs logging-server | Select-String -Pattern provision
     ```
 - **No data** trên panel:
   - Xem **Prometheus** có đang UP không (http://localhost:9090 → Status → Targets).
@@ -129,11 +142,11 @@ docker compose ps
 
 ```bash
 # Kiểm tra container
-docker ps
-docker logs -f monitoring-grafana-dashboard-server
+docker compose ps logging-server
+docker compose logs -f logging-server
 
 # Exec shell vào container
-docker exec -it monitoring-grafana-dashboard-server sh
+docker compose exec logging-server sh
 
 # Kiểm tra file provisioning trong container
 ls -la /etc/grafana/provisioning/datasources
@@ -146,15 +159,15 @@ ls -la /var/lib/grafana/dashboards
 ### Backup dashboards & provisioning
 
 ```bash
-# Trên host (đang đứng tại root project)
-tar czf grafana-backup-$(date +%F).tar.gz logging/provisioning logging/dashboards
+# Trên host (root project)
+tar czf grafana-backup-$(date +%F).tar.gz logging/provisioning logging/grafana-data
 ```
 
 ### Restore
 
 ```bash
 tar xzf grafana-backup-YYYY-MM-DD.tar.gz -C .
-docker compose restart monitoring-grafana-dashboard-server
+docker compose restart logging-server
 ```
 
 ## Hiệu năng

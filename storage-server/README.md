@@ -15,26 +15,30 @@ Storage server sử dụng MinIO để cung cấp object storage tương thích 
 - **Port**: 9000 (API), 9001 (Console)
 - **Root User**: admin123
 - **Root Password**: strongpass123
-- **Storage Path**: /data/storage
+- **Storage Path thực tế**: `/data` (ENTRYPOINT chỉ rõ) – biến `STORAGE_PATH=/data/storage` trong compose HIỆN KHÔNG được Dockerfile sử dụng.
 - **Mode**: Standalone
 
-### Environment Variables
+### Environment Variables (đang khai báo)
 ```bash
-STORAGE_PATH=/data/storage
 MINIO_ROOT_USER=admin123
 MINIO_ROOT_PASSWORD=strongpass123
+# STORAGE_PATH (không được dùng bởi ENTRYPOINT hiện tại)
 ```
+Khuyến nghị: Xoá biến `STORAGE_PATH` khỏi compose hoặc sửa Dockerfile thành:
+```dockerfile
+ENTRYPOINT ["minio", "server", "$STORAGE_PATH", "--console-address", ":9001"]
+```
+
 
 ## Cấu trúc thư mục
 
 ```
 storage-server/
-├── data/                    # MinIO data storage
-│   └── [user-data]/        # User uploaded files
-│       └── [files]/        # Actual file storage
-├── Dockerfile              # Docker configuration
-└── README.md               # This file
+├── data/            # Thư mục trống ban đầu – MinIO tự tạo cấu trúc nội bộ
+├── Dockerfile        # Build Alpine + binary minio
+└── README.md
 ```
+
 
 ## Docker Configuration
 
@@ -51,9 +55,9 @@ storage-server:
     - cloud-net
   restart: unless-stopped
   environment:
-    - STORAGE_PATH=/data/storage
     - MINIO_ROOT_USER=admin123
     - MINIO_ROOT_PASSWORD=strongpass123
+    # STORAGE_PATH bỏ qua (không tác động đến ENTRYPOINT hiện tại)
   volumes:
     - ./storage-server/data:/data
 ```
@@ -101,9 +105,9 @@ mc mb local/images
 }
 ```
 
-## API Integration
+## API Integration (Ví dụ tham khảo – KHÔNG nằm trong repo)
 
-### Frontend Integration
+### Frontend Integration (Example)
 ```javascript
 // MinIO client configuration
 const Minio = require('minio');
@@ -124,7 +128,7 @@ const uploadFile = async (file, bucketName) => {
 };
 ```
 
-### Backend Integration
+### Backend Integration (Example)
 ```javascript
 // File upload endpoint
 app.post('/api/upload', async (req, res) => {
@@ -138,7 +142,7 @@ app.post('/api/upload', async (req, res) => {
 });
 ```
 
-## File Management
+## File Management (Khuyến nghị – CHƯA cấu hình tự động)
 
 ### Supported File Types
 - **Images**: JPG, PNG, GIF, WebP
@@ -146,10 +150,10 @@ app.post('/api/upload', async (req, res) => {
 - **Videos**: MP4, AVI, MOV
 - **Archives**: ZIP, RAR, 7Z
 
-### File Size Limits
-- **Maximum file size**: 5GB per file
-- **Maximum bucket size**: 100GB
-- **Concurrent uploads**: 10 per user
+### File Size Limits (Ví dụ)
+- Maximum file size: 5GB per file (giới hạn phụ thuộc cấu hình/tài nguyên, không enforced trong repo)
+- Maximum bucket size: 100GB (giới hạn logic – cần script giám sát để thực thi)
+- Concurrent uploads: 10 per user (cần lớp ứng dụng bên ngoài kiểm soát)
 
 ### File Organization
 ```
@@ -162,7 +166,7 @@ app.post('/api/upload', async (req, res) => {
 └── temp/                  # Temporary files
 ```
 
-## Security Configuration
+## Security Configuration (Khuyến nghị – CHƯA triển khai)
 
 ### Access Control
 - **Public buckets**: Read-only access
@@ -175,9 +179,9 @@ app.post('/api/upload', async (req, res) => {
 - **Presigned URLs**: Temporary access
 
 ### Data Protection
-- **Encryption at rest**: AES-256
-- **Encryption in transit**: TLS 1.2+
-- **Access logging**: All operations logged
+- Encryption at rest: CẦN bật KMS / SSE cấu hình thêm (chưa có)
+- Encryption in transit: Hiện dùng HTTP (muốn TLS cần reverse proxy hoặc cài cert)
+- Access logging: Chưa lưu vào file – chỉ stdout container
 
 ## Monitoring và Logs
 
@@ -192,11 +196,10 @@ curl http://localhost:9000/minio/health/ready
 
 ### Logs
 ```bash
-# View MinIO logs
-docker-compose logs -f storage-server
+# Xem log realtime (stdout)
+docker compose logs -f storage-server
 
-# Access MinIO logs inside container
-docker-compose exec storage-server tail -f /data/.minio.log
+# Không có file /data/.minio.log mặc định trong setup này
 ```
 
 ### Metrics
@@ -205,65 +208,62 @@ docker-compose exec storage-server tail -f /data/.minio.log
 - **Error rate**: Failed requests percentage
 - **Response time**: Average response time
 
-## Backup và Restore
+## Backup và Restore (Tuỳ chọn – yêu cầu mount /backup hoặc chạy trên host)
 
-### Backup Strategy
+Nếu muốn backup nội bộ container cần mount thêm volume `/backup`. Hiện compose KHÔNG khai báo.
 ```bash
-# Backup MinIO data
-docker-compose exec storage-server tar -czf /backup/minio-data.tar.gz /data
+# Backup dữ liệu (chạy trên host, tránh thiếu /backup)
+tar -czf minio-data-$(date +%F).tar.gz -C storage-server/data .
 
-# Backup bucket policies
+# Backup policies (cần cài mc trên host)
+mc alias set local http://localhost:9000 admin123 strongpass123
 mc admin policy list local > policies-backup.json
 ```
-
-### Restore Process
+Restore:
 ```bash
-# Restore MinIO data
-docker-compose exec storage-server tar -xzf /backup/minio-data.tar.gz -C /
-
-# Restore bucket policies
+tar -xzf minio-data-YYYY-MM-DD.tar.gz -C storage-server/data
+# Re-import policy nếu đã dùng custom
 mc admin policy add local policy-name policies-backup.json
 ```
 
 ## Performance Optimization
 
-### Storage Optimization
-- **SSD storage**: For better I/O performance
-- **RAID configuration**: For redundancy
-- **Compression**: Enable file compression
-- **Deduplication**: Remove duplicate files
+### Storage Optimization (Ý tưởng, chưa áp dụng)
+- SSD storage để cải thiện I/O
+- RAID / distributed MinIO cho redundancy
+- Compression / deduplication yêu cầu lớp ứng dụng hoặc middleware
 
-### Network Optimization
-- **CDN integration**: For global access
-- **Load balancing**: Multiple MinIO instances
-- **Caching**: Frequently accessed files
+### Network Optimization (Ý tưởng)
+- CDN integration (qua reverse proxy ngoài)
+- Load balancing: nhiều instance MinIO ở chế độ distributed
+- Caching: sử dụng layer proxy hoặc edge cache
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Console not accessible**: Check port 9001 mapping
-2. **API connection fails**: Verify credentials và endpoint
-3. **Upload fails**: Check file size limits
-4. **Permission denied**: Verify bucket policies
+1. Console not accessible: Port 9001 chưa publish hoặc container chưa chạy.
+2. API connection fails: Sai accessKey/secret hoặc dùng HTTPS khi service chỉ hỗ trợ HTTP.
+3. Upload fails: Bucket chưa tạo hoặc vượt giới hạn tài nguyên host (không phải giới hạn logic trong README).
+4. Permission denied: Chưa thiết lập bucket policy tương ứng (mặc định private).
 
 ### Debug Commands
 
 ```bash
 # Check container status
-docker-compose ps storage-server
+docker compose ps storage-server
 
 # Check container logs
-docker-compose logs -f storage-server
+docker compose logs -f storage-server
 
 # Access container shell
-docker-compose exec storage-server sh
+docker compose exec storage-server sh
 
 # Check storage usage
-docker-compose exec storage-server du -sh /data
+docker compose exec storage-server du -sh /data
 
 # Restart service
-docker-compose restart storage-server
+docker compose restart storage-server
 ```
 
 ### Performance Issues

@@ -12,7 +12,7 @@ DNS server sử dụng Bind9 để cung cấp DNS resolution cho các domain n�
 ## Bind9 Configuration
 
 ### Basic Settings
-- **Port**: 53 (UDP/TCP)
+- **Port**: Host 1053 → Container 53 (UDP/TCP) (docker-compose map `1053:53/udp`, `1053:53/tcp`)
 - **Configuration**: /etc/bind/named.conf
 - **Zone Directory**: /etc/bind/zones/
 - **User**: bind:bind
@@ -44,8 +44,8 @@ dns-server:
     dockerfile: Dockerfile
   image: 52200292/dns-server:latest
   ports:
-    - "53:53/udp"    # DNS UDP
-    - "53:53/tcp"    # DNS TCP
+    - "1053:53/udp"   # Host port 1053 -> container 53 UDP
+    - "1053:53/tcp"   # Host port 1053 -> container 53 TCP
   networks:
     - cloud-net
   volumes:
@@ -86,63 +86,76 @@ $TTL 604800
     IN  A   127.0.0.1
 ```
 
-### 3. cloud.local Zone (db.cloud.local)
+### 3. cloud.local Zone (db.cloud.local) – HIỆN TẠI
+Khớp đúng nội dung file thực tế `zones/db.cloud.local`:
 ```conf
 $TTL 1H
 @   IN  SOA ns.cloud.local. admin.cloud.local. (1 1H 15M 1W 1H)
-    IN  NS   ns.cloud.local.
+  IN  NS   ns.cloud.local.
 
-ns          IN  A   172.19.0.10
-frontend    IN  A   172.19.0.11
-backend     IN  A   172.19.0.12
-auth        IN  A   172.19.0.13
-database    IN  A   172.19.0.14
-storage     IN  A   172.19.0.15
+ns          IN  A   172.31.0.8
+frontend-1  IN  A   172.31.0.2
+frontend-2  IN  A   172.31.0.3
+backend     IN  A   172.31.0.7
+auth        IN  A   172.31.0.6
+database    IN  A   172.31.0.10
+storage     IN  A   172.31.0.4
 ```
+
+Ghi chú: Hai instance frontend được phân biệt bằng các label `frontend-1` và `frontend-2` thay vì một bản ghi chung.
 
 ## DNS Resolution
 
-### Internal Services
-- **frontend.cloud.local** → 172.19.0.11
-- **backend.cloud.local** → 172.19.0.12
-- **auth.cloud.local** → 172.19.0.13
-- **database.cloud.local** → 172.19.0.14
-- **storage.cloud.local** → 172.19.0.15
-- **ns.cloud.local** → 172.19.0.10
+### Internal Services (Theo zone hiện tại)
+- `frontend-1.cloud.local` → 172.31.0.2
+- `frontend-2.cloud.local` → 172.31.0.3
+- `backend.cloud.local` → 172.31.0.7
+- `auth.cloud.local` → 172.31.0.6
+- `database.cloud.local` → 172.31.0.10
+- `storage.cloud.local` → 172.31.0.4
+- `ns.cloud.local` → 172.31.0.8
 
 ### localhost Resolution
 - **localhost** → 127.0.0.1
 
 ## DNS Testing
 
-### Command Line Testing
+Host port dùng 1053 nên cần chỉ rõ port nếu tools không mặc định.
+
+### Command Line Testing (Host)
 ```bash
-# Test DNS resolution
-nslookup frontend.cloud.local localhost
-nslookup backend.cloud.local localhost
-nslookup auth.cloud.local localhost
+# Liệt kê bản ghi chính
+dig @localhost -p 1053 cloud.local ANY
 
-# Test with dig
-dig @localhost frontend.cloud.local
-dig @localhost backend.cloud.local
+# Kiểm tra từng service
+dig @localhost -p 1053 frontend-1.cloud.local A
+dig @localhost -p 1053 frontend-2.cloud.local A
+dig @localhost -p 1053 backend.cloud.local A
+dig @localhost -p 1053 auth.cloud.local A
+dig @localhost -p 1053 storage.cloud.local A
 
-# Test reverse lookup
-nslookup 172.19.0.11 localhost
+# nslookup ví dụ
+nslookup backend.cloud.local localhost:1053
+nslookup frontend-1.cloud.local localhost:1053
+
+# Reverse lookup (nếu có PTR – hiện CHƯA cấu hình)
+# nslookup 172.31.0.2 localhost:1053
 ```
 
-### From Docker Containers
+### From Other Containers
+Container nội bộ truy vấn trực tiếp port 53:
 ```bash
-# Test from other containers
-docker-compose exec frontend nslookup backend.cloud.local
-docker-compose exec backend nslookup database.cloud.local
+docker-compose exec backend dig @dns-server frontend-1.cloud.local A
+docker-compose exec backend dig @dns-server frontend-2.cloud.local A
+docker-compose exec backend dig @dns-server database.cloud.local A
 ```
 
 ## DNS Configuration Management
 
-### Adding New Records
+### Adding New Records (Ví dụ phù hợp dải 172.31.0.x)
 ```conf
-# Add new service to db.cloud.local
-newservice    IN  A   172.19.0.16
+# Thêm service mới
+cache       IN  A   172.31.0.13
 ```
 
 ### Adding New Zones
@@ -154,21 +167,30 @@ zone "newdomain.local" IN {
 };
 ```
 
-### CNAME Records
+### CNAME Records (Phù hợp với tên record thực tế)
 ```conf
-# Add CNAME records
-www.frontend  IN  CNAME  frontend.cloud.local.
-api.backend   IN  CNAME  backend.cloud.local.
+www.frontend-1   IN  CNAME  frontend-1.cloud.local.
+www.frontend-2   IN  CNAME  frontend-2.cloud.local.
+api.backend      IN  CNAME  backend.cloud.local.
 ```
 
 ## Security Configuration
 
-### Access Control
+### Access Control (THỰC TẾ vs Dự Kiến)
+Hiện tại `named.conf` cho phép:
+```conf
+allow-recursion { any; };
+allow-query { any; };
+```
+Nghĩa là DNS mở cho mọi nguồn. Nếu muốn hạn chế chỉ mạng nội bộ 172.31.0.0/24 thì chỉnh:
 ```conf
 options {
-    allow-recursion { 172.19.0.0/16; };  # Only allow internal network
-    allow-query { 172.19.0.0/16; };      # Restrict queries
-    allow-transfer { none; };             # Disable zone transfers
+  directory "/var/cache/bind";
+  allow-recursion { 172.31.0.0/24; };
+  allow-query { 172.31.0.0/24; };
+  allow-transfer { none; };
+  dnssec-validation auto;
+  listen-on-v6 { any; };
 };
 ```
 

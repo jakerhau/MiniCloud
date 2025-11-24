@@ -19,33 +19,31 @@ monitoring/
 ## Docker Configuration
 
 ```yaml
-monitoring-prometheus-server:
-image: prom/prometheus:latest
-container_name: monitoring-prometheus-server
-ports:
-    - "9090:9090"
-networks:
-    - cloud-net
-volumes:
-    - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-    - prometheus_data:/prometheus
+monitoring-node-exporter-server:
+  image: prom/node-exporter:latest
+  ports:
+    - "9100:9100"
+  networks:
+    cloud-net:
+      ipv4_address: 172.31.0.9
+  restart: unless-stopped
 
-command:
+monitoring-prometheus-server:
+  image: prom/prometheus:latest
+  ports:
+    - "9090:9090"
+  volumes:
+    - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+  networks:
+    cloud-net:
+      ipv4_address: 172.31.0.11
+  restart: unless-stopped
+  command:
     - --config.file=/etc/prometheus/prometheus.yml
     - --storage.tsdb.path=/prometheus
-    - --web.enable-lifecycle          
-restart: unless-stopped
-
-monitoring-node-exporter-server:
-image: prom/node-exporter:latest
-container_name: monitoring-node-exporter-server
-ports:
-    - "9100:9100"
-networks:
-    - cloud-net
-restart: unless-stopped
-
+    - --web.enable-lifecycle
 ```
+
 
 ## Access Information
 
@@ -66,7 +64,7 @@ curl -X POST http://localhost:9090/-/reload
 ### Global
 - `scrape_interval`: 15s (mặc định cho toàn hệ thống)
 
-### Jobs mặc định (đã được cấu hình trong `prometheus.yml`)
+### Các scrape jobs (trong `prometheus.yml`)
 ```yaml
 global:
   scrape_interval: 15s
@@ -76,28 +74,36 @@ scrape_configs:
     static_configs:
       - targets: ["monitoring-node-exporter-server:9100"]
 
-  # tự giám sát chính Prometheus
   - job_name: "prometheus"
     static_configs:
       - targets: ["monitoring-prometheus-server:9090"]
+
+  - job_name: "frontend"
+    metrics_path: /api/metrics
+    static_configs:
+      - targets: ["web-frontend-server1:3000", "web-frontend-server2:3000"]
+```
+
+Job `frontend` thu thập custom metric từ endpoint Next.js `/api/metrics` (ví dụ gauge `frontend_up 1`). Targets sẽ là DOWN nếu các container frontend chưa chạy.
+
+## Khởi động Monitoring
+```bash
+docker compose up -d monitoring-node-exporter-server monitoring-prometheus-server
+docker compose ps monitoring-node-exporter-server monitoring-prometheus-server
 ```
 
 
 ## Backup và Restore
 
-### Backup Prometheus TSDB
-Dừng container để snapshot nhất quán hoặc dùng API snapshot:
-
+### Backup Prometheus TSDB (tùy chọn)
+Chỉ áp dụng nếu đã thêm volume `prometheus_data:/prometheus`.
 ```bash
-# Dừng tạm thời (đơn giản)
-docker stop monitoring-prometheus-server
-docker run --rm -v prometheus_data:/data -v $(pwd):/backup alpine \
+docker compose stop monitoring-prometheus-server
+docker run --rm -v prometheus_data:/data -v "$PWD":/backup alpine \
   sh -c "cd /data && tar czf /backup/prometheus_data_$(date +%F).tar.gz ."
-docker start monitoring-prometheus-server
+docker compose start monitoring-prometheus-server
 ```
-
-### Restore
-Giải nén vào volume `prometheus_data` rồi khởi động lại container.
+Restore: giải nén trở lại volume `prometheus_data` rồi start lại container.
 
 ## Troubleshooting
 
@@ -108,9 +114,8 @@ Giải nén vào volume `prometheus_data` rồi khởi động lại container.
 
 ### Logs
 ```bash
-# Xem logs
-docker logs -f monitoring-prometheus-server
-docker logs -f monitoring-node-exporter-server
+docker compose logs -f monitoring-prometheus-server
+docker compose logs -f monitoring-node-exporter-server
 ```
 
 ### Metrics nhanh để kiểm tra
