@@ -2,7 +2,7 @@ frontend/README.md
 # Web Frontend Server (`web-frontend-server`)
 
 ## 1. Giới thiệu
-Service frontend cung cấp giao diện người dùng xây dựng bằng Next.js 14 + TypeScript + Tailwind CSS (xem [frontend/README.md](frontend/README.md) ban đầu). Docker image chạy trực tiếp Node.js (không reverse proxy Nginx trong thư mục này).
+Service frontend cung cấp giao diện người dùng xây dựng bằng Next.js 14 + TypeScript + Tailwind CSS. Docker image chạy trực tiếp Node.js (không reverse proxy Nginx trong thư mục này).
 
 ## 2. Vai trò trong kiến trúc MyMiniCloud
 Đảm nhiệm phần UI (Next.js App Router) hiển thị blog/articles và các component (hero, header, footer). Giao tiếp nội bộ với các service khác qua hostname Docker (ví dụ backend, auth, storage) như được mô tả trong README gốc.
@@ -13,7 +13,6 @@ Service frontend cung cấp giao diện người dùng xây dựng bằng Next.j
 - Ngôn ngữ: TypeScript
 - Styling: Tailwind CSS
 - Docker build multi-stage: cài deps, build (`npm run build`), chạy `npm start`
-Tham khảo [frontend/Dockerfile](frontend/Dockerfile).
 
 ## 4. Cấu trúc thư mục
 ```
@@ -39,7 +38,6 @@ frontend/
 
 
 ## 5. Cấu hình Nginx
-Không tồn tại Nginx server block hoặc file cấu hình trong `frontend/`. Ứng dụng phục vụ nội dung qua Next.js dev/production server (Node.js). Do đó:
 - `location /` và `location /blog/` không được cấu hình ở Nginx
 - Không dùng `alias` hay root static của Nginx; static assets được Next.js phục vụ từ thư mục `public/`
 
@@ -49,10 +47,8 @@ Không tồn tại Nginx server block hoặc file cấu hình trong `frontend/`.
 docker build -t web-frontend-server ./frontend
 docker run --rm -p 3000:3000 web-frontend-server
 ```
-Port thực tế được expose trong [frontend/Dockerfile](frontend/Dockerfile) là `3000`.
 
 ### Chạy qua docker-compose
-Dựa trên README gốc frontend (service thường được khai báo như):
 ```yaml
 frontend:
   build:

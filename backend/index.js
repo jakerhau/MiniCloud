@@ -44,6 +44,7 @@ const jwtMiddleware = expressjwt({
 }).unless({ 
   path: [
     '/hello',
+    '/api/student',
     '/api/hello',
     '/health',
     /^\/api-docs.*/
@@ -88,6 +89,23 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openapiSpec, { explorer: t
 
 app.get(['/hello', '/api/hello'], (req, res) => {
   res.json({ message: 'Hello, world!' });
+});
+
+app.get(['/secure'], (req, res) => {
+  const user = req.auth;
+
+  if (!user) {
+    return res.status(500).json({ error: 'Missing auth payload' });
+  }
+
+  return res.json({
+    message: 'Secure resource OK',
+    preferred_username: user.preferred_username,
+    email: user.email,
+    sub: user.sub,
+    iss: user.iss,
+    aud: user.aud,
+  });
 });
 
 app.get(['/api/student'], (req, res) => {
