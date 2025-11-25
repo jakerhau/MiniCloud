@@ -1,6 +1,6 @@
 # Backend Service
 
-Backend tối giản cung cấp một vài API công khai và bảo vệ JWT, đồng thời hiển thị tài liệu Swagger UI với OAuth2/PKCE. Không có kết nối database hay CRUD phức tạp – dữ liệu duy nhất được trả về từ file tĩnh `students.json`.
+Backend tối giản cung cấp một vài API công khai và bảo vệ JWT, đồng thời hiển thị tài liệu Swagger UI với OAuth2/PKCE. Ngoài dữ liệu tĩnh `students.json`, service hiện đã có kết nối thử nghiệm tới MySQL để kiểm tra sức khỏe DB và lấy danh sách `subjects`.
 
 ## Công Nghệ
 - Runtime: Node.js 20 (alpine image)
@@ -24,6 +24,12 @@ backend/
 |-----|----------|------|
 | `OIDC_ISSUER` | Yes | Issuer Keycloak nội bộ, ví dụ: `http://auth:8080/auth/realms/master` |
 | `OIDC_AUDIENCE` | Yes | Audience gán cho client/backend (ví dụ `backend`) |
+| `DB_HOST` | No | Host MySQL (mặc định `database` trong docker network) |
+| `DB_PORT` | No | Port MySQL (mặc định `3306`) |
+| `DB_USER` | No | User MySQL (mặc định `root`) |
+| `DB_PASSWORD` | No | Password MySQL (mặc định `root`) |
+| `DB_NAME` | No | Tên database (mặc định `Mini_Cloud`) |
+| `DB_POOL_LIMIT` | No | Số kết nối tối đa trong pool (mặc định `5`) |
 | `PORT` | No | Không dùng trong code (mặc định hardcode 8081) |
 
 Ứng dụng sẽ thoát ngay nếu thiếu `OIDC_ISSUER` hoặc `OIDC_AUDIENCE`. Từ `OIDC_ISSUER` nội bộ suy ra JWKS URI: `ISSUER + /protocol/openid-connect/certs`.
@@ -56,8 +62,16 @@ Không sử dụng: mysql2, cors, helmet, dotenv – những thư viện này xu
 | `/hello` | GET | Public | Trả về JSON "Hello, world!" |
 | `/api/hello` | GET | Public | Alias tương tự `/hello` |
 | `/api/student` | GET | Public | Đọc và trả về nội dung `students.json` |
+| `/api/db-test` | GET | Public | Ping MySQL (trả về trạng thái kết nối + thời gian server) |
+| `/api/subjects` | GET | Public | Lấy danh sách `subjects` từ MySQL |
 | `/secure` | GET | Protected | Yêu cầu access token hợp lệ (RS256) |
 | `/api-docs` | GET (UI) | Public | Swagger UI + OAuth2 PKCE |
+
+## Kết Nối Database
+- Dùng `mysql2/promise` với connection pool (mặc định 5, có thể chỉnh qua `DB_POOL_LIMIT`).
+- Khi khởi động, backend thử chạy `SELECT 1`; nếu thất bại sẽ log lỗi (các endpoint DB trả 500 cho tới khi pool sẵn sàng).
+- Endpoint `/api/db-test` trả trạng thái kết nối và `NOW()` từ MySQL để bạn xác nhận backend ↔ database hoạt động.
+- Endpoint `/api/subjects` thực thi truy vấn đơn giản `SELECT subject_id, subject_name FROM subjects ORDER BY subject_id`.
 
 Whitelist trong middleware còn chứa `/health` nhưng hiện tại CHƯA có route `/health` được implement (ghi chú để tránh nhầm lẫn).
 

@@ -41,3 +41,7 @@ build/
 
 
 context/
+
+auth/data/h2/
+logging/grafana-data/
+storage-server/data/

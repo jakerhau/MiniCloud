@@ -42,6 +42,12 @@ services:
     environment:
       - OIDC_ISSUER=http://auth:8080/auth/realms/master
       - OIDC_AUDIENCE=backend
+      - DB_HOST=database
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASSWORD=root
+      - DB_NAME=Mini_Cloud
+      - DB_POOL_LIMIT=5
 
   database:
     image: mysql:8.0

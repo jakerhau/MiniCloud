@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { expressjwt } from 'express-jwt';
 import jwksRsa from 'jwks-rsa';
+import mysql from 'mysql2/promise';
 import swaggerUi from 'swagger-ui-express';
 
 const app = express();
@@ -11,6 +12,13 @@ const app = express();
 const ISSUER = process.env.OIDC_ISSUER;
 const AUDIENCE = process.env.OIDC_AUDIENCE;
 const ALGORITHMS = ['RS256'];
+
+const DB_HOST = process.env.DB_HOST || 'database';
+const DB_PORT = Number(process.env.DB_PORT || 3306);
+const DB_USER = process.env.DB_USER || 'root';
+const DB_PASSWORD = process.env.DB_PASSWORD ?? 'root';
+const DB_NAME = process.env.DB_NAME || 'Mini_Cloud';
+const DB_POOL_LIMIT = Number(process.env.DB_POOL_LIMIT || 5);
 
 const missingEnv = Object.entries({ OIDC_ISSUER: ISSUER, OIDC_AUDIENCE: AUDIENCE })
   .filter(([, value]) => !value)
@@ -29,6 +37,40 @@ console.log(`  AUDIENCE: ${AUDIENCE}`);
 const JWKS_URI = `${ISSUER.replace(/\/$/, '')}/protocol/openid-connect/certs`;
 console.log(`  JWKS URI: ${JWKS_URI}`);
 
+console.log('Database configuration:');
+console.log(`  HOST: ${DB_HOST}`);
+console.log(`  PORT: ${DB_PORT}`);
+console.log(`  USER: ${DB_USER}`);
+console.log(`  DB NAME: ${DB_NAME}`);
+console.log(`  POOL LIMIT: ${DB_POOL_LIMIT}`);
+
+let dbPool;
+const initDbPool = async () => {
+  try {
+    dbPool = mysql.createPool({
+      host: DB_HOST,
+      port: DB_PORT,
+      user: DB_USER,
+      password: DB_PASSWORD,
+      database: DB_NAME,
+      waitForConnections: true,
+      connectionLimit: DB_POOL_LIMIT,
+    });
+    await dbPool.query('SELECT 1');
+    console.log('MySQL connection established');
+  } catch (error) {
+    console.error('Failed to initialize MySQL pool:', error.message);
+  }
+};
+
+const getPool = () => {
+  if (!dbPool) {
+    throw new Error('Database pool not initialized or connection failed');
+  }
+  return dbPool;
+};
+
+initDbPool();
 
 const jwtMiddleware = expressjwt({
   secret: jwksRsa.expressJwtSecret({
@@ -47,7 +89,9 @@ const jwtMiddleware = expressjwt({
     '/api/student',
     '/api/hello',
     '/health',
-    /^\/api-docs.*/
+    /^\/api-docs.*/,
+    '/api/db-test',
+    '/api/subjects',
   ]
 });
 
@@ -125,6 +169,39 @@ app.get(['/api/student'], (req, res) => {
       return res.status(500).json({ error: 'Failed to parse students data' });
     }
   });
+});
+
+app.get('/api/db-test', async (req, res) => {
+  try {
+    const pool = getPool();
+    const [rows] = await pool.query('SELECT NOW() AS serverTime');
+    return res.json({
+      connected: true,
+      serverTime: rows?.[0]?.serverTime,
+    });
+  } catch (error) {
+    console.error('DB test failed:', error);
+    return res.status(500).json({
+      error: 'Database connection failed',
+      details: error.message,
+    });
+  }
+});
+
+app.get('/api/subjects', async (req, res) => {
+  try {
+    const pool = getPool();
+    const [rows] = await pool.query(
+      'SELECT subject_id AS id, subject_name AS name FROM subjects ORDER BY subject_id ASC',
+    );
+    return res.json(rows);
+  } catch (error) {
+    console.error('Failed to fetch subjects:', error);
+    return res.status(500).json({
+      error: 'Failed to read subjects from database',
+      details: error.message,
+    });
+  }
 });
 
 app.listen(8081, () => {

@@ -49,6 +49,53 @@
         }
       }
     },
+    "/api/db-test": {
+      "get": {
+        "summary": "Check database connectivity",
+        "responses": {
+          "200": {
+            "description": "Successfully connected to database",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "connected": { "type": "boolean" },
+                    "serverTime": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          },
+          "500": { "description": "Database connection failed" }
+        }
+      }
+    },
+    "/api/subjects": {
+      "get": {
+        "summary": "List subjects from MySQL",
+        "responses": {
+          "200": {
+            "description": "Array of subjects",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "integer" },
+                      "name": { "type": "string" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": { "description": "Database error" }
+        }
+      }
+    },
     "/secure": {
       "get": {
         "summary": "Secure endpoint",
