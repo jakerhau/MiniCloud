@@ -48,6 +48,14 @@
           "200": { "description": "OK" }
         }
       }
+    },
+    "/secure": {
+      "get": {
+        "summary": "Secure endpoint",
+        "responses": {
+          "200": { "description": "OK" }
+        }
+      }
     }
   }
 }
