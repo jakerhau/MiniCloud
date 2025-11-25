@@ -21,7 +21,7 @@ MiniCloud la ban demo kien truc microservices chay bang Docker Compose. Bo dich 
                                          |
                         [MinIO API 9000 / Console 9001]
                                          |
-            [Bind9 DNS 1053]   [Prometheus 9090 + NodeExporter 9100]
+            [Bind9 DNS 53]   [Prometheus 9090 + NodeExporter 9100]
                                          |
                                   [Grafana 3120]
 ```
@@ -98,14 +98,14 @@ docker compose up -d --build backend
 | Auth (Keycloak) | http://localhost:8082/auth | Admin `admin` / `admin`, realm `master`, issuer public `http://localhost:8082/auth/realms/master` (noi bo: `http://auth:8080/auth/realms/master`) |
 | Storage API (MinIO) | http://localhost:9000 | Access key `admin123`, secret `strongpass123` |
 | Storage Console | http://localhost:9001 | Dang nhap bang admin123 / strongpass123 |
-| DNS | 127.0.0.1#1053 | UDP/TCP; ban ghi `frontend-1/2`, `backend`, `auth`, `database`, `storage`, `ns` |
+| DNS | 127.0.0.1:53 | UDP/TCP; ban ghi `frontend-1/2`, `backend`, `auth`, `database`, `storage`, `ns`, `minio`, `keycloak` |
 | Monitoring (Prometheus) | http://localhost:9090 | Targets: prometheus, node-exporter, frontend (`/api/metrics`) |
 | Node Exporter | http://localhost:9100/metrics | Host metrics exporter |
 | Logging (Grafana) | http://localhost:3120 | Login `admin` / `admin`, datasource Prometheus + dashboards `Node Exporter Full`/`System Health of 52200205` nam san trong volume `logging/grafana-data` (thu muc `logging/dashboards` chua duoc mount tu compose) |
 
 ## DNS Resolution
 
-Bind9 listen port 53 trong container, publish ra host port `1053`. Zone `cloud.local` gom:
+Bind9 listen port 53 trong container, publish ra host port `53` (port mặc định DNS). Zone `cloud.local` gom:
 
 - `frontend-1.cloud.local` -> 172.31.0.2
 - `frontend-2.cloud.local` -> 172.31.0.3
@@ -115,10 +115,10 @@ Bind9 listen port 53 trong container, publish ra host port `1053`. Zone `cloud.l
 - `storage.cloud.local` -> 172.31.0.4
 - `ns.cloud.local` -> 172.31.0.8
 
-Kiem tra DNS tu host (nho chi dinh port 1053):
+Kiem tra DNS tu host (port 53 la mac dinh):
 ```bash
-dig @127.0.0.1 -p 1053 frontend-1.cloud.local
-nslookup backend.cloud.local 127.0.0.1#1053
+dig @127.0.0.1 frontend-1.cloud.local
+nslookup backend.cloud.local 127.0.0.1
 ```
 
 ## Troubleshooting
@@ -143,7 +143,7 @@ docker compose restart [service-name]
 - Port 80/3001/3002/8081/8082/9000/9001/9090/9100/3120 bi chiem boi ung dung khac hoac doi port mapping.
 - MySQL chua gan volume `/var/lib/mysql`; muon giu data can bo sung volume.
 - MinIO dang mount `/data`; env `STORAGE_PATH` khong co hieu luc neu khong sua ENTRYPOINT.
-- DNS tra NXDOMAIN neu quen `-p 1053` hoac service `dns-server` chua chay.
+- DNS tra NXDOMAIN neu service `dns-server` chua chay hoac host khong dung DNS server tai `127.0.0.1:53`.
 - `/secure` tra 401 khi token sai audience/issuer; lay token tu Keycloak realm `master` va dam bao `OIDC_ISSUER`/`OIDC_AUDIENCE` dung.
 - Chua co script test .ps1; dung cac lenh dig/nslookup/curl o cac phan tren de kiem tra nhanh.
 

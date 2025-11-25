@@ -9,3 +9,5 @@ backend     IN  A   172.31.0.7
 auth        IN  A   172.31.0.6
 database    IN  A   172.31.0.10
 storage     IN  A   172.31.0.4
+minio       IN  A   172.31.0.4
+keycloak    IN  A   172.31.0.6

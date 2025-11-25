@@ -111,8 +111,8 @@ services:
       dockerfile: Dockerfile
     image: 52200292/dns-server:latest
     ports:
-      - "1053:53/udp"
-      - "1053:53/tcp"
+      - "53:53/udp"
+      - "53:53/tcp"
     networks:
       cloud-net:
         ipv4_address: 172.31.0.8

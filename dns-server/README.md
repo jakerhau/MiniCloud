@@ -12,7 +12,7 @@ DNS server sử dụng Bind9 để cung cấp DNS resolution cho các domain n�
 ## Bind9 Configuration
 
 ### Basic Settings
-- **Port**: Host 1053 → Container 53 (UDP/TCP) (docker-compose map `1053:53/udp`, `1053:53/tcp`)
+- **Port**: Host 53 → Container 53 (UDP/TCP) (docker-compose map `53:53/udp`, `53:53/tcp`)
 - **Configuration**: /etc/bind/named.conf
 - **Zone Directory**: /etc/bind/zones/
 - **User**: bind:bind
@@ -44,8 +44,8 @@ dns-server:
     dockerfile: Dockerfile
   image: 52200292/dns-server:latest
   ports:
-    - "1053:53/udp"   # Host port 1053 -> container 53 UDP
-    - "1053:53/tcp"   # Host port 1053 -> container 53 TCP
+    - "53:53/udp"   # Host port 53 -> container 53 UDP
+    - "53:53/tcp"   # Host port 53 -> container 53 TCP
   networks:
     - cloud-net
   volumes:
@@ -120,26 +120,26 @@ Ghi chú: Hai instance frontend được phân biệt bằng các label `fronten
 
 ## DNS Testing
 
-Host port dùng 1053 nên cần chỉ rõ port nếu tools không mặc định.
+Host port dùng 53 (port mặc định của DNS) nên không cần chỉ định port trong các lệnh.
 
 ### Command Line Testing (Host)
 ```bash
 # Liệt kê bản ghi chính
-dig @localhost -p 1053 cloud.local ANY
+dig @localhost cloud.local ANY
 
 # Kiểm tra từng service
-dig @localhost -p 1053 frontend-1.cloud.local A
-dig @localhost -p 1053 frontend-2.cloud.local A
-dig @localhost -p 1053 backend.cloud.local A
-dig @localhost -p 1053 auth.cloud.local A
-dig @localhost -p 1053 storage.cloud.local A
+dig @localhost frontend-1.cloud.local A
+dig @localhost frontend-2.cloud.local A
+dig @localhost backend.cloud.local A
+dig @localhost auth.cloud.local A
+dig @localhost storage.cloud.local A
 
-# nslookup ví dụ
-nslookup backend.cloud.local localhost:1053
-nslookup frontend-1.cloud.local localhost:1053
+# nslookup ví dụ (port 53 là mặc định)
+nslookup backend.cloud.local localhost
+nslookup frontend-1.cloud.local localhost
 
 # Reverse lookup (nếu có PTR – hiện CHƯA cấu hình)
-# nslookup 172.31.0.2 localhost:1053
+# nslookup 172.31.0.2 localhost
 ```
 
 ### From Other Containers
