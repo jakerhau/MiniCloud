@@ -1,8 +1,8 @@
 # MiniCloud - Microservices Architecture
 
-MiniCloud la ban demo kien truc microservices chay bang Docker Compose. Bo dich vu gom Nginx load balancer, 2 frontend Next.js, backend Node.js (JWT qua Keycloak), MySQL, MinIO, Bind9 DNS, Prometheus + Node Exporter va Grafana.
+MiniCloud là bản demo kiến trúc microservices chạy bằng Docker Compose. Bộ dịch vụ gồm Nginx load balancer, 2 frontend Next.js, backend Node.js (JWT qua Keycloak), MySQL, MinIO, Bind9 DNS, Prometheus + Node Exporter và Grafana.
 
-## Kien truc he thong
+## Kiến trúc hệ thống
 
 ```
                 [Client]
@@ -21,42 +21,46 @@ MiniCloud la ban demo kien truc microservices chay bang Docker Compose. Bo dich 
                                          |
                         [MinIO API 9000 / Console 9001]
                                          |
-            [Bind9 DNS 53]   [Prometheus 9090 + NodeExporter 9100]
+            [Bind9 DNS 1053]   [Prometheus 9090 + NodeExporter 9100]
                                          |
                                   [Grafana 3120]
 ```
 
-- `proxy` (Nginx) can bang toi 2 frontend, route `/api` va `/student` den backend, `/auth` den Keycloak, phuc vu blog tinh tu `frontend/public/blog` tai `/blog-static/`.
-- Network `cloud-net` dung IP co dinh 172.31.0.x; cac service goi nhau qua service name, host truy cap qua port mapping.
-- Backend nhan JWT RS256 tu issuer `http://auth:8080/auth/realms/master`, swagger tai `/api-docs`; bat buoc khai bao env `OIDC_ISSUER`, `OIDC_AUDIENCE`.
-- MinIO chay single node, mount du lieu tai `./storage-server/data`; env `STORAGE_PATH` hien chua co tac dung vi ENTRYPOINT dang khoa duong dan `/data`.
-- Prometheus scrape node-exporter, chinh no va frontend `/api/metrics`; Grafana dung datasource Prometheus da seed san trong `logging/grafana-data/grafana.db` (dashboard san: `Node Exporter Full`, `System Health of 52200205`). Thu muc `logging/dashboards` chua duoc mount trong compose; muon nap JSON moi thi copy vao `logging/grafana-data/dashboards/` hoac them volume mount tu thu muc do.
-- Bind9 phuc vu zone `cloud.local` cho cac hostname dich vu.
+- `proxy` (Nginx) cân bằng tới 2 frontend, route `/api` và `/student` đến backend, `/auth` đến Keycloak, phục vụ blog tĩnh từ `frontend/public/blog` tại `/blog-static/`.
+- Network `cloud-net` dùng IP cố định 172.31.0.x; các service gọi nhau qua service name, host truy cập qua port mapping.
+- Backend nhận JWT RS256 từ issuer `http://auth:8080/auth/realms/master`, swagger tại `/api-docs`; bắt buộc khai báo env `OIDC_ISSUER`, `OIDC_AUDIENCE`.
+- MinIO chạy single node, mount dữ liệu tại `./storage-server/data`; env `STORAGE_PATH` hiện chưa có tác dụng vì ENTRYPOINT đang khóa đường dẫn `/data`.
+- Prometheus scrape node-exporter, chính nó và frontend `/api/metrics`; Grafana dùng datasource Prometheus đã seed sẵn trong `logging/grafana-data/grafana.db` (dashboard sẵn: `Node Exporter Full`, `System Health of 52200205`). Thư mục `logging/dashboards` chưa được mount trong compose; muốn nạp JSON mới thì copy vào `logging/grafana-data/dashboards/` hoặc thêm volume mount từ thư mục đó.
+- Bind9 phục vụ zone `cloud.local` cho các hostname dịch vụ.
 
-## Cach chay Docker
+## Cách chạy Docker
 
 ### 1. Clone repository
 ```bash
-git clone <repository-url>
+git clone <github.com/jakerhau/MiniCloud.git>
 cd MiniCloud
-```
+````
 
-### 2. Khoi dong tat ca services
+### 2. Khởi động tất cả services
+
 ```bash
 docker compose up -d --build
 ```
 
-### 3. Kiem tra trang thai services
+### 3. Kiểm tra trạng thái services
+
 ```bash
 docker compose ps
 ```
 
-### 4. Xem logs tat ca services
+### 4. Xem logs tất cả services
+
 ```bash
 docker compose logs -f
 ```
 
-### 5. Xem logs tung service
+### 5. Xem logs từng service
+
 ```bash
 docker compose logs -f proxy
 docker compose logs -f web-frontend-server1
@@ -71,93 +75,101 @@ docker compose logs -f monitoring-node-exporter-server
 docker compose logs -f logging-server
 ```
 
-### 6. Dung tat ca services
+### 6. Dừng tất cả services
+
 ```bash
 docker compose down
 ```
 
-### 7. Dung va xoa volumes (se mat du lieu)
+### 7. Dừng và xóa volumes (sẽ mất dữ liệu)
+
 ```bash
 docker compose down -v
 ```
 
-### 8. Rebuild va khoi dong lai mot service
+### 8. Rebuild và khởi động lại một service
+
 ```bash
 docker compose up -d --build backend
 ```
 
-## Truy cap cac dich vu
+## Truy cập các dịch vụ
 
-| Service | Endpoint | Ghi chu |
-|---------|----------|---------|
-| Load Balancer (proxy) | http://localhost | Round robin 2 frontend, route `/api`/`/student` -> backend, `/auth` -> Keycloak, blog tinh `/blog-static/*` |
-| Frontend 1 | http://localhost:3001 | Next.js instance 1 (truy cap truc tiep, bo qua load balancer) |
-| Frontend 2 | http://localhost:3002 | Next.js instance 2 |
-| Backend API | http://localhost:8081 | Swagger UI `/api-docs`, `/secure` can JWT audience `backend` |
-| Database (MySQL) | 127.0.0.1:3307 | DB `Mini_Cloud`, user `root` / `root`; chua gan volume data (xoa container se mat data); chi khoi tao schema/demo tu `database/init/001_init.sql`, backend chua ket noi |
-| Auth (Keycloak) | http://localhost:8082/auth | Admin `admin` / `admin`, realm `master`, issuer public `http://localhost:8082/auth/realms/master` (noi bo: `http://auth:8080/auth/realms/master`) |
-| Storage API (MinIO) | http://localhost:9000 | Access key `admin123`, secret `strongpass123` |
-| Storage Console | http://localhost:9001 | Dang nhap bang admin123 / strongpass123 |
-| DNS | 127.0.0.1:53 | UDP/TCP; ban ghi `frontend-1/2`, `backend`, `auth`, `database`, `storage`, `ns`, `minio`, `keycloak` |
-| Monitoring (Prometheus) | http://localhost:9090 | Targets: prometheus, node-exporter, frontend (`/api/metrics`) |
-| Node Exporter | http://localhost:9100/metrics | Host metrics exporter |
-| Logging (Grafana) | http://localhost:3120 | Login `admin` / `admin`, datasource Prometheus + dashboards `Node Exporter Full`/`System Health of 52200205` nam san trong volume `logging/grafana-data` (thu muc `logging/dashboards` chua duoc mount tu compose) |
+| Service                 | Endpoint                                                       | Ghi chú                                                                                                                                                                                                            |
+| ----------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Load Balancer (proxy)   | [http://localhost](http://localhost)                           | Round robin 2 frontend, route `/api`/`/student` -> backend, `/auth` -> Keycloak, blog tĩnh `/blog-static/*`                                                                                                        |
+| Frontend 1              | [http://localhost:3001](http://localhost:3001)                 | Next.js instance 1 (truy cập trực tiếp, bỏ qua load balancer)                                                                                                                                                      |
+| Frontend 2              | [http://localhost:3002](http://localhost:3002)                 | Next.js instance 2                                                                                                                                                                                                 |
+| Backend API             | [http://localhost:8081](http://localhost:8081)                 | Swagger UI `/api-docs`, `/secure` cần JWT audience `backend`                                                                                                                                                       |
+| Database (MySQL)        | 127.0.0.1:3307                                                 | DB `Mini_Cloud`, user `root` / `root`; chưa gắn volume data (xóa container sẽ mất data); chỉ khởi tạo schema/demo từ `database/init/001_init.sql`, backend chưa kết nối                                            |
+| Auth (Keycloak)         | [http://localhost:8082/auth](http://localhost:8082/auth)       | Admin `admin` / `admin`, realm `master`, issuer public `http://localhost:8082/auth/realms/master` (nội bộ: `http://auth:8080/auth/realms/master`)                                                                  |
+| Storage API (MinIO)     | [http://localhost:9000](http://localhost:9000)                 | Access key `admin123`, secret `strongpass123`                                                                                                                                                                      |
+| Storage Console         | [http://localhost:9001](http://localhost:9001)                 | Đăng nhập bằng admin123 / strongpass123                                                                                                                                                                            |
+| DNS                     | 127.0.0.1#1053                                                 | UDP/TCP; bản ghi `frontend-1/2`, `backend`, `auth`, `database`, `storage`, `ns`                                                                                                                                    |
+| Monitoring (Prometheus) | [http://localhost:9090](http://localhost:9090)                 | Targets: prometheus, node-exporter, frontend (`/api/metrics`)                                                                                                                                                      |
+| Node Exporter           | [http://localhost:9100/metrics](http://localhost:9100/metrics) | Host metrics exporter                                                                                                                                                                                              |
+| Logging (Grafana)       | [http://localhost:3120](http://localhost:3120)                 | Login `admin` / `admin`, datasource Prometheus + dashboards `Node Exporter Full`/`System Health of 52200205` nằm sẵn trong volume `logging/grafana-data` (thư mục `logging/dashboards` chưa được mount từ compose) |
 
 ## DNS Resolution
 
-Bind9 listen port 53 trong container, publish ra host port `53` (port mặc định DNS). Zone `cloud.local` gom:
+Bind9 listen port 53 trong container, publish ra host port `1053`. Zone `cloud.local` gồm:
 
-- `frontend-1.cloud.local` -> 172.31.0.2
-- `frontend-2.cloud.local` -> 172.31.0.3
-- `backend.cloud.local` -> 172.31.0.7
-- `auth.cloud.local` -> 172.31.0.6
-- `database.cloud.local` -> 172.31.0.10
-- `storage.cloud.local` -> 172.31.0.4
-- `ns.cloud.local` -> 172.31.0.8
+* `frontend-1.cloud.local` -> 172.31.0.2
+* `frontend-2.cloud.local` -> 172.31.0.3
+* `backend.cloud.local` -> 172.31.0.7
+* `auth.cloud.local` -> 172.31.0.6
+* `database.cloud.local` -> 172.31.0.10
+* `storage.cloud.local` -> 172.31.0.4
+* `ns.cloud.local` -> 172.31.0.8
 
-Kiem tra DNS tu host (port 53 la mac dinh):
+Kiểm tra DNS từ host (nhớ chỉ định port 1053):
+
 ```bash
-dig @127.0.0.1 frontend-1.cloud.local
-nslookup backend.cloud.local 127.0.0.1
+dig @127.0.0.1 -p 1053 frontend-1.cloud.local
+nslookup backend.cloud.local 127.0.0.1#1053
 ```
 
 ## Troubleshooting
 
-### Kiem tra network
+### Kiểm tra network
+
 ```bash
 docker network ls
 docker network inspect minicloud_cloud-net
 ```
 
-### Kiem tra container logs
+### Kiểm tra container logs
+
 ```bash
 docker compose logs [service-name]
 ```
 
 ### Restart service
+
 ```bash
 docker compose restart [service-name]
 ```
 
-### Cac loi thuong gap
-- Port 80/3001/3002/8081/8082/9000/9001/9090/9100/3120 bi chiem boi ung dung khac hoac doi port mapping.
-- MySQL chua gan volume `/var/lib/mysql`; muon giu data can bo sung volume.
-- MinIO dang mount `/data`; env `STORAGE_PATH` khong co hieu luc neu khong sua ENTRYPOINT.
-- DNS tra NXDOMAIN neu service `dns-server` chua chay hoac host khong dung DNS server tai `127.0.0.1:53`.
-- `/secure` tra 401 khi token sai audience/issuer; lay token tu Keycloak realm `master` va dam bao `OIDC_ISSUER`/`OIDC_AUDIENCE` dung.
-- Chua co script test .ps1; dung cac lenh dig/nslookup/curl o cac phan tren de kiem tra nhanh.
+### Các lỗi thường gặp
 
-## Cau truc thu muc
+* Port 80/3001/3002/8081/8082/9000/9001/9090/9100/3120 bị chiếm bởi ứng dụng khác hoặc đổi port mapping.
+* MySQL chưa gắn volume `/var/lib/mysql`; muốn giữ data cần bổ sung volume.
+* MinIO đang mount `/data`; env `STORAGE_PATH` không có hiệu lực nếu không sửa ENTRYPOINT.
+* DNS trả NXDOMAIN nếu quên `-p 1053` hoặc service `dns-server` chưa chạy.
+* `/secure` trả 401 khi token sai audience/issuer; lấy token từ Keycloak realm `master` và đảm bảo `OIDC_ISSUER`/`OIDC_AUDIENCE` đúng.
+* Chưa có script test .ps1; dùng các lệnh dig/nslookup/curl ở các phần trên để kiểm tra nhanh.
+
+## Cấu trúc thư mục
 
 ```
 MiniCloud/
-  auth/              # Du lieu Keycloak (mounted /opt/keycloak/data)
+  auth/              # Dữ liệu Keycloak (mounted /opt/keycloak/data)
   backend/           # Node.js API + swagger
   database/          # SQL init cho MySQL
   dns-server/        # Bind9 config & zone files
   frontend/          # Next.js app (build cho 2 instance)
-  load_balancer/     # Nginx proxy cau hinh
-  logging/           # Grafana provisioning, dashboards va du lieu
+  load_balancer/     # Nginx proxy cấu hình
+  logging/           # Grafana provisioning, dashboards và dữ liệu
   monitoring/        # Prometheus config
   storage-server/    # MinIO image & data
   docker-compose.yml # Docker Compose configuration
@@ -167,19 +179,22 @@ MiniCloud/
   .gitignore
 ```
 
-## Phat trien
+## Phát triển
 
-1. Sua doi code trong thu muc dich vu tuong ung.
+1. Sửa đổi code trong thư mục dịch vụ tương ứng.
 2. Rebuild service: `docker compose up -d --build <service-name>`.
 3. Xem logs: `docker compose logs -f <service-name>`.
-4. Backend can dung `OIDC_ISSUER`/`OIDC_AUDIENCE` (hardcode port 8081); frontend expose metrics tai `/api/metrics` cho Prometheus.
+4. Backend cần dùng `OIDC_ISSUER`/`OIDC_AUDIENCE` (hardcode port 8081); frontend expose metrics tại `/api/metrics` cho Prometheus.
 
-## Luu y
+## Lưu ý
 
-- Keycloak admin mac dinh `admin/admin`; doi mat khau ngay neu may co internet.
-- MinIO creds `admin123/strongpass123`; thay bang gia tri manh hon khi chay that.
-- Du lieu: Keycloak trong `./auth/data/`, MinIO trong `./storage-server/data/`, Grafana trong `./logging/grafana-data/`. MySQL chua mount volume nen xoa container se mat data.
-- Grafana duoc seed san datasource Prometheus + dashboards trong `logging/grafana-data/grafana.db`; thu muc `logging/dashboards` chi la noi luu JSON mau, khong tu dong mount.
-- Backend demo chua ket noi MySQL hay MinIO (chi doc `students.json` va kiem JWT), nen DB/MinIO chi la cac dich vu de phong.
-- Network `cloud-net` dung 172.31.0.0/24; tranh trung lap voi mang dang co tren host.
-- Muon doi duong dan du lieu MinIO can sua ENTRYPOINT hoac bo env `STORAGE_PATH` dang khong duoc su dung.
+* Keycloak admin mặc định `admin/admin`; đổi mật khẩu ngay nếu máy có internet.
+* MinIO creds `admin123/strongpass123`; thay bằng giá trị mạnh hơn khi chạy thật.
+* Dữ liệu: Keycloak trong `./auth/data/`, MinIO trong `./storage-server/data/`, Grafana trong `./logging/grafana-data/`. MySQL chưa mount volume nên xóa container sẽ mất data.
+* Grafana được seed sẵn datasource Prometheus + dashboards trong `logging/grafana-data/grafana.db`; thư mục `logging/dashboards` chỉ là nơi lưu JSON mẫu, không tự động mount.
+* Backend demo chưa kết nối MySQL hay MinIO (chỉ đọc `students.json` và kiểm JWT), nên DB/MinIO chỉ là các dịch vụ để phòng.
+* Network `cloud-net` dùng 172.31.0.0/24; tránh trùng lặp với mạng đang có trên host.
+* Muốn đổi đường dẫn dữ liệu MinIO cần sửa ENTRYPOINT hoặc bỏ env `STORAGE_PATH` đang không được sử dụng.
+
+```
+
